@@ -35,7 +35,7 @@ android_app {
         "androidx.swiperefreshlayout_swiperefreshlayout",
         "com.google.android.material_material",
         "Updater_io.noties.markwon_core",
-        "kotlin-stdlib-jdk8",
+        "kotlin-stdlib",
     ],
 
     optimize: {
