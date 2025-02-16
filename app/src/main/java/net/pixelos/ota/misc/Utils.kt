@@ -156,7 +156,7 @@ object Utils {
     @JvmStatic
     fun getCertifiedPropsURL(context: Context): String {
         val buildVersion: String = SystemProperties.get(Constants.PROP_BUILD_VERSION)
-        val certifiedPropsUrl: String = context.getString(R.string.certified_prop_json_url)
+        val certifiedPropsUrl: String = context.getString(R.string.certified_prop_url)
 
         return certifiedPropsUrl.replace("{version}", buildVersion)
     }

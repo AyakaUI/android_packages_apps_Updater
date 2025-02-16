@@ -17,6 +17,7 @@ package net.pixelos.ota
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.content.pm.PackageInstaller
 import android.os.Bundle
 import android.os.SystemProperties
@@ -36,11 +37,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.pixelos.ota.controller.UpdaterController
-import net.pixelos.ota.download.Downloader
+import net.pixelos.ota.download.APKDownloader
 import net.pixelos.ota.misc.Constants
 import net.pixelos.ota.misc.Utils
 import net.pixelos.ota.misc.Utils.getLocalVersion
-import org.json.JSONObject
 import java.io.File
 import java.io.FileInputStream
 import java.util.Locale
@@ -113,7 +113,8 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
 
             abPerfMode?.let {
                 if (supportsPerfMode()) {
-                    it.isChecked = sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, true)
+                    it.isChecked =
+                        sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, true)
                 } else {
                     generalCategory.removePreference(it)
                 }
@@ -216,22 +217,28 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
             certifiedPropStatus.summary = getString(R.string.certified_prop_checking)
             checkForCertifiedProps.isEnabled = false
 
-            val jsonStr = Downloader.asString(Utils.getCertifiedPropsURL(requireContext()))
+            val path =
+                File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
+            val url = Utils.getCertifiedPropsURL(requireContext())
+
+            var success: Boolean
+            var version: Long
+
+            val file = File(path)
+            if (file.exists()) file.delete()
+
             withContext(Dispatchers.Main) {
-
-                if (jsonStr.isNullOrEmpty()) {
-                    showToast(R.string.certified_prop_download_failed)
-                    checkForCertifiedProps.isEnabled = true
-                    updateCertifiedPropsStatus(-1)
-                    return@withContext
-                }
-
                 try {
-                    val obj = JSONObject(jsonStr)
-                    if (obj.has("version")) {
-                        val version: Int = obj.getInt("version")
-                        updateCertifiedPropsStatus(version.toLong())
+                    withContext(Dispatchers.IO) {
+                        success = APKDownloader.downloadApk(path, url)
                     }
+                    if (success) {
+                        version = getPackageVersion(path)
+                    } else {
+                        showToast(R.string.certified_prop_download_failed)
+                        return@withContext
+                    }
+                    updateCertifiedPropsStatus(version)
                 } catch (e: Exception) {
                     showToast(R.string.certified_prop_download_failed)
                 } finally {
@@ -240,33 +247,26 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
             }
         }
 
+        private fun getPackageVersion(path: String): Long {
+            val pm = requireContext().packageManager
+            val pkgInfo: PackageInfo = pm.getPackageArchiveInfo(path, 0)!!
+            return pkgInfo.longVersionCode
+        }
+
         private fun showToast(stringId: Int) {
             Toast.makeText(context, stringId, Toast.LENGTH_LONG).show()
         }
 
-        private suspend fun updateCertifiedProps() {
+        private fun updateCertifiedProps() {
             val path =
                 File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
-            val url = Utils.getCertifiedPropsURL(requireContext()).replace("json", "apk")
-            var success: Boolean
 
-            try {
-                withContext(Dispatchers.IO) {
-                    success = Downloader.downloadApk(path, url)
-                }
-                if (!success) {
-                    showToast(R.string.certified_prop_download_failed)
-                } else {
-                    if (installApk(path))
-                        showToast(R.string.certified_prop_install_success)
-                    else
-                        showToast(R.string.certified_prop_install_failed)
-                }
-            } catch (e: Exception) {
-                showToast(R.string.snack_download_failed)
-            } finally {
-                checkForCertifiedProps.isEnabled = true
-            }
+            if (installApk(path))
+                showToast(R.string.certified_prop_install_success)
+            else
+                showToast(R.string.certified_prop_install_failed)
+
+            checkForCertifiedProps.isEnabled = true
         }
 
         private fun installApk(path: String): Boolean {
@@ -279,10 +279,13 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
                 val session = packageInstaller.openSession(sessionId)
 
                 FileInputStream(File(path)).use { inputStream ->
-                    session.openWrite("app_install", 0, -1).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                        session.fsync(outputStream)
-                    }
+                    session.openWrite(
+                        "app_install", 0, -1
+                    )
+                        .use { outputStream ->
+                            inputStream.copyTo(outputStream)
+                            session.fsync(outputStream)
+                        }
                 }
                 val receiverIntent = Intent(context, PackageInstallerStatusReceiver::class.java)
                 val flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -307,15 +310,18 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
                 Locale.getDefault(), resources.getString(R.string.certified_prop_info),
                 if (version > 0) version else unknownStr
             )
+
             val remoteStr: String = String.format(
                 Locale.getDefault(), resources.getString(R.string.certified_prop_remote),
                 if (remoteVersion > 0) remoteVersion else unknownStr
             )
 
+            val updateAvailable: Boolean = remoteVersion > version
+
             status.append(versionStr)
             status.append(remoteStr)
 
-            if (remoteVersion > version) setupPreferenceAction(Action.DOWNLOAD_AND_INSTALL)
+            if (updateAvailable) setupPreferenceAction(Action.DOWNLOAD_AND_INSTALL)
             certifiedPropStatus.summary = status.toString()
         }
 

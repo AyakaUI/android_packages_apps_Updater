@@ -18,45 +18,18 @@ package net.pixelos.ota.download
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
 
-class Downloader {
+class APKDownloader {
     companion object {
         private const val TIMEOUT_CONNECT = 15000 // 15 seconds
         private const val TIMEOUT_READ = 30000 // 30 seconds
         private const val BUFFER_SIZE = 262144 // 256 KB
-        private const val TAG = "Downloader"
-
-        @JvmStatic
-        suspend fun asString(mUrl: String): String? {
-            return withContext(Dispatchers.IO) {
-                try {
-                    val url = URL(mUrl)
-                    val urlConn = url.openConnection() as HttpURLConnection
-                    urlConn.apply {
-                        requestMethod = "GET"
-                        connectTimeout = TIMEOUT_CONNECT
-                        readTimeout = TIMEOUT_READ
-                        doInput = true
-                    }
-                    urlConn.connect()
-
-                    BufferedReader(InputStreamReader(urlConn.inputStream)).use { it.readText() }
-                } catch (e: SocketTimeoutException) {
-                    Log.e(TAG, "Request timed out", e)
-                    null
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error fetching data", e)
-                    null
-                }
-            }
-        }
+        private const val TAG = "APKDownloader"
 
         @JvmStatic
         suspend fun downloadApk(path: String?, mUrl: String?): Boolean {
