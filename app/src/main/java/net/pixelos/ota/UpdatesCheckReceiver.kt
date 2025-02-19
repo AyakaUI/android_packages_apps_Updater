@@ -125,7 +125,7 @@ class UpdatesCheckReceiver : BroadcastReceiver() {
                 NotificationChannel(
                     NEW_UPDATES_NOTIFICATION_CHANNEL,
                     context.getString(R.string.new_updates_channel_title),
-                    NotificationManager.IMPORTANCE_LOW
+                    NotificationManager.IMPORTANCE_LOW,
                 )
             val notificationBuilder =
                 NotificationCompat.Builder(context, NEW_UPDATES_NOTIFICATION_CHANNEL)
@@ -136,7 +136,7 @@ class UpdatesCheckReceiver : BroadcastReceiver() {
                     context,
                     0,
                     notificationIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
             notificationBuilder.setContentIntent(intent)
             notificationBuilder.setContentTitle(context.getString(R.string.new_updates_found_title))
@@ -168,7 +168,7 @@ class UpdatesCheckReceiver : BroadcastReceiver() {
                 AlarmManager.RTC,
                 System.currentTimeMillis() + checkAutoUpdateTime,
                 checkAutoUpdateTime,
-                updateCheckIntent
+                updateCheckIntent,
             )
 
             val nextCheckDate = Date(System.currentTimeMillis() + checkAutoUpdateTime)

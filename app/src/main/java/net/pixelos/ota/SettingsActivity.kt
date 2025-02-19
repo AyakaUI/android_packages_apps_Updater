@@ -70,9 +70,8 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
         return true
     }
 
-    abstract class SettingsFragment(
-        @XmlRes private val preferencesResId: Int,
-    ) : PreferenceFragmentCompat() {
+    abstract class SettingsFragment(@XmlRes private val preferencesResId: Int) :
+        PreferenceFragmentCompat() {
 
         @CallSuper
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -113,8 +112,7 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
 
             abPerfMode?.let {
                 if (supportsPerfMode()) {
-                    it.isChecked =
-                        sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, true)
+                    it.isChecked = sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, true)
                 } else {
                     generalCategory.removePreference(it)
                 }
@@ -185,9 +183,7 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
                         layoutResource = R.layout.certified_props_check
                         onPreferenceClickListener =
                             Preference.OnPreferenceClickListener {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    checkForCertifiedPropsUpdate()
-                                }
+                                CoroutineScope(Dispatchers.Main).launch { checkForCertifiedPropsUpdate() }
                                 true
                             }
                     }
@@ -198,9 +194,7 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
                         layoutResource = R.layout.certified_props_download_install
                         onPreferenceClickListener =
                             Preference.OnPreferenceClickListener {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    updateCertifiedProps()
-                                }
+                                CoroutineScope(Dispatchers.Main).launch { updateCertifiedProps() }
                                 true
                             }
                     }
@@ -210,15 +204,14 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
 
         private enum class Action {
             CHECK_UPDATES,
-            DOWNLOAD_AND_INSTALL
+            DOWNLOAD_AND_INSTALL,
         }
 
         private suspend fun checkForCertifiedPropsUpdate() {
             certifiedPropStatus.summary = getString(R.string.certified_prop_checking)
             checkForCertifiedProps.isEnabled = false
 
-            val path =
-                File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
+            val path = File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
             val url = Utils.getCertifiedPropsURL(requireContext())
 
             var success: Boolean
@@ -229,9 +222,7 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
 
             withContext(Dispatchers.Main) {
                 try {
-                    withContext(Dispatchers.IO) {
-                        success = APKDownloader.downloadApk(path, url)
-                    }
+                    withContext(Dispatchers.IO) { success = APKDownloader.downloadApk(path, url) }
                     if (success) {
                         version = getPackageVersion(path)
                     } else {
@@ -258,13 +249,10 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
         }
 
         private fun updateCertifiedProps() {
-            val path =
-                File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
+            val path = File(requireContext().getExternalFilesDir(null), "prop.apk").absolutePath
 
-            if (installApk(path))
-                showToast(R.string.certified_prop_install_success)
-            else
-                showToast(R.string.certified_prop_install_failed)
+            if (installApk(path)) showToast(R.string.certified_prop_install_success)
+            else showToast(R.string.certified_prop_install_failed)
 
             checkForCertifiedProps.isEnabled = true
         }
@@ -279,13 +267,10 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
                 val session = packageInstaller.openSession(sessionId)
 
                 FileInputStream(File(path)).use { inputStream ->
-                    session.openWrite(
-                        "app_install", 0, -1
-                    )
-                        .use { outputStream ->
-                            inputStream.copyTo(outputStream)
-                            session.fsync(outputStream)
-                        }
+                    session.openWrite("app_install", 0, -1).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                        session.fsync(outputStream)
+                    }
                 }
                 val receiverIntent = Intent(context, PackageInstallerStatusReceiver::class.java)
                 val flags = PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -306,15 +291,19 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
             val version: Long = getLocalVersion(requireContext(), certifiedPropOverlayPkgName)
 
             val unknownStr = resources.getString(R.string.text_download_size_unknown)
-            val versionStr: String = String.format(
-                Locale.getDefault(), resources.getString(R.string.certified_prop_info),
-                if (version > 0) version else unknownStr
-            )
+            val versionStr: String =
+                String.format(
+                    Locale.getDefault(),
+                    resources.getString(R.string.certified_prop_info),
+                    if (version > 0) version else unknownStr,
+                )
 
-            val remoteStr: String = String.format(
-                Locale.getDefault(), resources.getString(R.string.certified_prop_remote),
-                if (remoteVersion > 0) remoteVersion else unknownStr
-            )
+            val remoteStr: String =
+                String.format(
+                    Locale.getDefault(),
+                    resources.getString(R.string.certified_prop_remote),
+                    if (remoteVersion > 0) remoteVersion else unknownStr,
+                )
 
             val updateAvailable: Boolean = remoteVersion > version
 

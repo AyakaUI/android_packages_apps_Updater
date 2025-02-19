@@ -62,7 +62,7 @@ object FileUtils {
     private class CallbackByteChannel(
         private val mReadableByteChannel: ReadableByteChannel,
         private val mSize: Long,
-        private val mCallback: ProgressCallBack
+        private val mCallback: ProgressCallBack,
     ) : ReadableByteChannel {
         private var mSizeRead: Long = 0
         private var mProgress = 0

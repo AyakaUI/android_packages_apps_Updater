@@ -86,7 +86,7 @@ object Utils {
                         " with version " +
                         update.version +
                         " is older than current Android version " +
-                        SystemProperties.get(Constants.PROP_BUILD_VERSION))
+                        SystemProperties.get(Constants.PROP_BUILD_VERSION)),
             )
             return false
         }
@@ -174,7 +174,8 @@ object Utils {
         val cm: ConnectivityManager = context.getSystemService(ConnectivityManager::class.java)!!
         val activeNetwork: Network? = cm.activeNetwork
         val networkCapabilities: NetworkCapabilities? = cm.getNetworkCapabilities(activeNetwork)
-        if (networkCapabilities != null &&
+        if (
+            networkCapabilities != null &&
             networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
             networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         ) {
@@ -248,9 +249,7 @@ object Utils {
 
     private fun removeUncryptFiles(downloadPath: File) {
         val uncryptFiles: Array<File>? =
-            downloadPath.listFiles { _: File?, name: String ->
-                name.endsWith(Constants.UNCRYPT_FILE_EXT)
-            }
+            downloadPath.listFiles { _: File?, name: String -> name.endsWith(Constants.UNCRYPT_FILE_EXT) }
         if (uncryptFiles == null) {
             return
         }
@@ -360,7 +359,7 @@ object Utils {
     }
 
     @JvmStatic
-     fun getLocalVersion(context: Context, pkgName: String): Long {
+    fun getLocalVersion(context: Context, pkgName: String): Long {
         var version: Long = -1
         try {
             val pkgInfo: PackageInfo =

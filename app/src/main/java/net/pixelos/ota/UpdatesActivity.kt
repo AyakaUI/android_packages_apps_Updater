@@ -167,7 +167,8 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                     if (UpdaterController.ACTION_UPDATE_STATUS == intent.action) {
                         handleDownloadStatusChange(downloadId)
                         updateUI(downloadId!!)
-                    } else if (UpdaterController.ACTION_DOWNLOAD_PROGRESS == intent.action ||
+                    } else if (
+                        UpdaterController.ACTION_DOWNLOAD_PROGRESS == intent.action ||
                         UpdaterController.ACTION_INSTALL_PROGRESS == intent.action
                     ) {
                         updateUI(downloadId!!)
@@ -194,7 +195,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                             mSwipeRefresh.isRefreshing = false
                         }
                     },
-                    0
+                    0,
                 )
             mUpdateInfoWarning.visibility = View.GONE
             downloadUpdatesList(true)
@@ -209,8 +210,10 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
 
         // Setup insets for Edge-to-Edge compatibility
         // from SettingsLib/CollapsingToolBar/EdgeToEdgeUtils.java
-        ViewCompat.setOnApplyWindowInsetsListener(this.requireViewById(android.R.id.content)) { v: View,
-                                                                                                windowInsets: WindowInsetsCompat ->
+        ViewCompat.setOnApplyWindowInsetsListener(this.requireViewById(android.R.id.content)) {
+                v: View,
+                windowInsets: WindowInsetsCompat,
+            ->
             val insets: Insets =
                 windowInsets.getInsets(
                     (WindowInsetsCompat.Type.systemBars() or
@@ -223,11 +226,13 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             WindowInsetsCompat.CONSUMED
         }
 
-        mNestedScrollView.setOnScrollChangeListener { v: NestedScrollView,
-                                                      _: Int,
-                                                      _: Int,
-                                                      _: Int,
-                                                      _: Int ->
+        mNestedScrollView.setOnScrollChangeListener {
+                v: NestedScrollView,
+                _: Int,
+                _: Int,
+                _: Int,
+                _: Int,
+            ->
             if (!v.canScrollVertically(1)) {
                 // Prevent swipeRefresh from triggering when swiping quickly to the
                 // top
@@ -299,7 +304,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         requestCode: Int,
         resultCode: Int,
         data: Intent?,
-        caller: ComponentCaller
+        caller: ComponentCaller,
     ) {
         if (!mUpdateImporter!!.onResult(requestCode, resultCode, data!!)) {
             super.onActivityResult(requestCode, resultCode, data, caller)
@@ -668,7 +673,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             getString(
                 R.string.header_last_updates_check,
                 getDateLocalized(this, DateFormat.LONG, lastCheck),
-                getTimeLocalized(this, lastCheck)
+                getTimeLocalized(this, lastCheck),
             )
         val headerLastCheck: TextView = requireViewById(R.id.lastSuccessfulCheck)
         headerLastCheck.text = lastCheckString
@@ -791,7 +796,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         setupButtonAction(
             if (canDelete) Action.DELETE else Action.CANCEL_INSTALLATION,
             mSecondaryActionButton,
-            !isBusy
+            !isBusy,
         )
         mSecondaryActionButton.visibility = if (showCancelButton) View.VISIBLE else View.GONE
 
@@ -865,7 +870,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                 resources.getString(
                     R.string.dialog_battery_low_message_pct,
                     resources.getInteger(R.integer.battery_ok_percentage_discharging),
-                    resources.getInteger(R.integer.battery_ok_percentage_charging)
+                    resources.getInteger(R.integer.battery_ok_percentage_charging),
                 )
             return MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.dialog_battery_low_title)

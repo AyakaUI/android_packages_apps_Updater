@@ -66,7 +66,11 @@ interface DownloadClient {
                 this.callback ?: throw IllegalStateException("No download callback defined")
 
             return HttpURLConnectionClient(
-                url, destination, progressListener, callback, useDuplicateLinks
+                url,
+                destination,
+                progressListener,
+                callback,
+                useDuplicateLinks,
             )
         }
 

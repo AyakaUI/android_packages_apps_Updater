@@ -55,7 +55,8 @@ class UpdaterReceiver : BroadcastReceiver() {
             val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 
             // We can't easily detect failed re-installations
-            if (preferences.getBoolean(Constants.PREF_INSTALL_AGAIN, false) ||
+            if (
+                preferences.getBoolean(Constants.PREF_INSTALL_AGAIN, false) ||
                 preferences.getBoolean(Constants.PREF_INSTALL_NOTIFIED, false)
             ) {
                 return false
@@ -72,14 +73,14 @@ class UpdaterReceiver : BroadcastReceiver() {
                 getDateLocalizedUTC(
                     context,
                     DateFormat.MEDIUM,
-                    preferences.getLong(Constants.PREF_INSTALL_NEW_TIMESTAMP, 0)
+                    preferences.getLong(Constants.PREF_INSTALL_NEW_TIMESTAMP, 0),
                 )
 
             val buildInfo =
                 context.getString(
                     R.string.list_build_version_date,
                     SystemProperties.get(Constants.PROP_BUILD_VERSION),
-                    buildDate
+                    buildDate,
                 )
 
             val notificationIntent = Intent(context, UpdatesActivity::class.java)
@@ -88,14 +89,14 @@ class UpdaterReceiver : BroadcastReceiver() {
                     context,
                     0,
                     notificationIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
 
             val notificationChannel =
                 NotificationChannel(
                     INSTALL_ERROR_NOTIFICATION_CHANNEL,
                     context.getString(R.string.update_failed_channel_title),
-                    NotificationManager.IMPORTANCE_LOW
+                    NotificationManager.IMPORTANCE_LOW,
                 )
             val builder =
                 NotificationCompat.Builder(context, INSTALL_ERROR_NOTIFICATION_CHANNEL)

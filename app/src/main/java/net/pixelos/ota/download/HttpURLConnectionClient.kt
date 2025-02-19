@@ -30,7 +30,7 @@ class HttpURLConnectionClient(
     private val destination: File,
     private val progressListener: DownloadClient.ProgressListener?,
     private val callback: DownloadClient.DownloadCallback,
-    private val useDuplicateLinks: Boolean
+    private val useDuplicateLinks: Boolean,
 ) : DownloadClient {
 
     private var client: HttpURLConnection = URL(url).openConnection() as HttpURLConnection
