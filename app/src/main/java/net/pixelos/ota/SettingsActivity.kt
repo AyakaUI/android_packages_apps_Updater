@@ -113,7 +113,7 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
 
             abPerfMode?.let {
                 if (supportsPerfMode()) {
-                    it.isChecked = sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, false)
+                    it.isChecked = sharedPreference.getBoolean(Constants.PREF_AB_PERF_MODE, true)
                 } else {
                     generalCategory.removePreference(it)
                 }
