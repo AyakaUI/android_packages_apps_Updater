@@ -32,6 +32,9 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.appbar.MaterialToolbar
+import java.io.File
+import java.io.FileInputStream
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,9 +44,6 @@ import net.pixelos.ota.download.APKDownloader
 import net.pixelos.ota.misc.Constants
 import net.pixelos.ota.misc.Utils
 import net.pixelos.ota.misc.Utils.getLocalVersion
-import java.io.File
-import java.io.FileInputStream
-import java.util.Locale
 
 class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
     private val toolbar by lazy { findViewById<MaterialToolbar>(R.id.toolbar) }
@@ -289,29 +289,42 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
         private fun updateCertifiedPropsStatus(remoteVersion: Long) {
             val status = StringBuilder()
             val version: Long = getLocalVersion(requireContext(), certifiedPropOverlayPkgName)
-
             val unknownStr = resources.getString(R.string.text_download_size_unknown)
-            val versionStr: String =
+
+            fun formatVersion(version: Long): String {
+                return if (version > 0) {
+                    val versionStr = version.toString().padStart(3, '0')
+                    val major = versionStr.dropLast(2).toInt()
+                    val minor = versionStr.takeLast(2).toInt()
+                    String.format(Locale.getDefault(), "%d.%02d", major, minor)
+                } else {
+                    unknownStr
+                }
+            }
+
+            val filteredVersion = formatVersion(version)
+            val filteredRemoteVersion = formatVersion(remoteVersion)
+
+            val versionStr =
                 String.format(
                     Locale.getDefault(),
-                    resources.getString(R.string.certified_prop_info),
-                    if (version > 0) version else unknownStr,
+                    getString(R.string.certified_prop_info),
+                    filteredVersion
                 )
-
-            val remoteStr: String =
+            val remoteStr =
                 String.format(
                     Locale.getDefault(),
-                    resources.getString(R.string.certified_prop_remote),
-                    if (remoteVersion > 0) remoteVersion else unknownStr,
+                    getString(R.string.certified_prop_remote),
+                    filteredRemoteVersion,
                 )
 
-            val updateAvailable: Boolean = remoteVersion > version
+            val updateAvailable = remoteVersion > version
 
             status.append(versionStr)
             status.append(remoteStr)
 
             if (updateAvailable) setupPreferenceAction(Action.DOWNLOAD_AND_INSTALL)
-            certifiedPropStatus.summary = status.toString()
+            certifiedPropStatus.summary = status
         }
 
         private fun supportsPerfMode(): Boolean {
