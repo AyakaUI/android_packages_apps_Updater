@@ -64,10 +64,6 @@
         </service>
 
         <receiver
-            android:name=".PackageInstallerStatusReceiver"
-            android:exported="false" />
-
-        <receiver
             android:name=".UpdaterReceiver"
             android:exported="false">
             <intent-filter>
