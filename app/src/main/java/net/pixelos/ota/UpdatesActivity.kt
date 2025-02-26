@@ -126,12 +126,38 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     private val toolbar by lazy { requireViewById<MaterialToolbar>(R.id.toolbar) }
     private val mNestedScrollView by lazy { requireViewById<NestedScrollView>(R.id.nestedScrollView) }
 
-    private var mBroadcastReceiver: BroadcastReceiver? = null
+    private var mBroadcastReceiver: BroadcastReceiver
+    private var mLatestDownloadId: String
+    private var mUpdateImporter: UpdateImporter
 
-    private var mLatestDownloadId: String? = null
     private var mUpdaterController: UpdaterController? = null
-
     private var mUpdaterService: UpdaterService? = null
+
+    init {
+        mLatestDownloadId = ""
+
+        mBroadcastReceiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    val downloadId: String? =
+                        intent.getStringExtra(UpdaterController.EXTRA_DOWNLOAD_ID)
+                    if (UpdaterController.ACTION_UPDATE_STATUS == intent.action) {
+                        handleDownloadStatusChange(downloadId!!)
+                        updateUI(downloadId)
+                    } else if (
+                        UpdaterController.ACTION_DOWNLOAD_PROGRESS == intent.action ||
+                        UpdaterController.ACTION_INSTALL_PROGRESS == intent.action
+                    ) {
+                        updateUI(downloadId!!)
+                    } else if (UpdaterController.ACTION_UPDATE_REMOVED == intent.action) {
+                        removeUpdate(downloadId!!)
+                        downloadUpdatesList(false)
+                    }
+                }
+            }
+
+        mUpdateImporter = UpdateImporter(this, this)
+    }
 
     private val mConnection: ServiceConnection =
         object : ServiceConnection {
@@ -150,34 +176,11 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             }
         }
 
-    private var mUpdateImporter: UpdateImporter? = null
     private var importDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_updates)
-
-        mUpdateImporter = UpdateImporter(this, this)
-
-        mBroadcastReceiver =
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    val downloadId: String? =
-                        intent.getStringExtra(UpdaterController.EXTRA_DOWNLOAD_ID)
-                    if (UpdaterController.ACTION_UPDATE_STATUS == intent.action) {
-                        handleDownloadStatusChange(downloadId)
-                        updateUI(downloadId!!)
-                    } else if (
-                        UpdaterController.ACTION_DOWNLOAD_PROGRESS == intent.action ||
-                        UpdaterController.ACTION_INSTALL_PROGRESS == intent.action
-                    ) {
-                        updateUI(downloadId!!)
-                    } else if (UpdaterController.ACTION_UPDATE_REMOVED == intent.action) {
-                        removeUpdate(downloadId)
-                        downloadUpdatesList(false)
-                    }
-                }
-            }
 
         setSupportActionBar(toolbar)
         supportActionBar?.apply { title = null }
@@ -256,21 +259,21 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         intentFilter.addAction(UpdaterController.ACTION_DOWNLOAD_PROGRESS)
         intentFilter.addAction(UpdaterController.ACTION_INSTALL_PROGRESS)
         intentFilter.addAction(UpdaterController.ACTION_UPDATE_REMOVED)
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver!!, intentFilter)
+        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, intentFilter)
     }
 
     override fun onPause() {
         if (importDialog != null) {
             importDialog!!.dismiss()
             importDialog = null
-            mUpdateImporter!!.stopImport()
+            mUpdateImporter.stopImport()
         }
 
         super.onPause()
     }
 
     public override fun onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver!!)
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver)
         if (mUpdaterService != null) {
             unbindService(mConnection)
         }
@@ -285,7 +288,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val itemId: Int = item.itemId
         if (itemId == R.id.menu_local_update) {
-            mUpdateImporter!!.openImportPicker()
+            mUpdateImporter.openImportPicker()
             return true
         } else if (itemId == R.id.menu_preferences) {
             val settingsActivity = Intent(this, SettingsActivity::class.java)
@@ -306,7 +309,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         data: Intent?,
         caller: ComponentCaller,
     ) {
-        if (!mUpdateImporter!!.onResult(requestCode, resultCode, data!!)) {
+        if (data == null || !mUpdateImporter.onResult(requestCode, resultCode, data)) {
             super.onActivityResult(requestCode, resultCode, data, caller)
         }
     }
@@ -514,7 +517,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         } else {
             sortedUpdates.sortedByDescending { it.timestamp }
             mLatestDownloadId = sortedUpdates[0].downloadId
-            updateUI(mLatestDownloadId!!)
+            updateUI(mLatestDownloadId)
         }
     }
 
@@ -644,7 +647,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                 connection.readTimeout = 5000
 
                 val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                var line: String?
+                var line: String
                 while ((reader.readLine().also { line = it }) != null) {
                     result.append(line).append("\n")
                 }
@@ -679,7 +682,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         headerLastCheck.text = lastCheckString
     }
 
-    private fun handleDownloadStatusChange(downloadId: String?) {
+    private fun handleDownloadStatusChange(downloadId: String) {
         if (Update.LOCAL_ID == downloadId) {
             return
         }
@@ -699,7 +702,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     }
 
     private fun updateUI(downloadId: String) {
-        if (mLatestDownloadId == null) {
+        if (mLatestDownloadId.isEmpty()) {
             setupButtonAction(Action.CHECK_UPDATES, mPrimaryActionButton, true)
             mUpdateIcon.setImageResource(R.drawable.ic_system_update)
             mUpdateStatus.setText(R.string.system_up_to_date)
@@ -830,10 +833,10 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         mProgress.visibility = View.GONE
     }
 
-    private fun removeUpdate(downloadId: String?) {
-        if (mLatestDownloadId != null && mLatestDownloadId == downloadId) {
-            mLatestDownloadId = null
-            updateUI("")
+    private fun removeUpdate(downloadId: String) {
+        if (mLatestDownloadId == downloadId) {
+            mLatestDownloadId = ""
+            updateUI(mLatestDownloadId)
         }
     }
 
@@ -848,7 +851,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         mUpdateInfoWarning.setText(stringId)
     }
 
-    private fun getDeleteDialog(downloadId: String?): MaterialAlertDialogBuilder {
+    private fun getDeleteDialog(downloadId: String): MaterialAlertDialogBuilder {
         return MaterialAlertDialogBuilder(this)
             .setTitle(R.string.confirm_delete_dialog_title)
             .setMessage(R.string.confirm_delete_dialog_message)
@@ -863,7 +866,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             .setNegativeButton(android.R.string.cancel, null)
     }
 
-    private fun getInstallDialog(downloadId: String?): MaterialAlertDialogBuilder? {
+    private fun getInstallDialog(downloadId: String): MaterialAlertDialogBuilder {
         if (!isBatteryLevelOk) {
             val resources: Resources = resources
             val message: String =
@@ -893,7 +896,6 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Could not determine the type of the update")
-                return null
             }
 
         val buildDate: String = getDateLocalizedUTC(this, DateFormat.MEDIUM, update.timestamp)

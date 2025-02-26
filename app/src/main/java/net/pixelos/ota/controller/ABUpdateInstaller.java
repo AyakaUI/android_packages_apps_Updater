@@ -101,8 +101,7 @@ class ABUpdateInstaller {
 
                         case UpdateEngine.UpdateStatusConstants.IDLE: {
                             // The service was restarted because we thought we were installing
-                            // an
-                            // update, but we aren't, so clear everything.
+                            // an update, but we aren't, so clear everything.
                             installationDone(false);
                         }
                         break;
