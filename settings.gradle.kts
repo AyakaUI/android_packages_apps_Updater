@@ -3,7 +3,7 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven("https://raw.githubusercontent.com/lineage-next/gradle-generatebp/v1.21/.m2")
+        maven("https://raw.githubusercontent.com/lineage-next/gradle-generatebp/v1.22/.m2")
     }
 }
 
