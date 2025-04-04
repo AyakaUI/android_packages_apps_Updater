@@ -683,16 +683,21 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         }
 
         val update: UpdateInfo = mUpdaterController!!.getUpdate(downloadId)
-        if (update.status == UpdateStatus.PAUSED_ERROR) {
-            setupButtonAction(Action.DELETE, mSecondaryActionButton, true)
-            mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
-            showUpdateInfo(R.string.snack_download_failed)
-        } else if (update.status == UpdateStatus.VERIFICATION_FAILED) {
-            mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
-            showUpdateInfo(R.string.snack_download_verification_failed)
-        } else if (update.status == UpdateStatus.VERIFIED) {
-            mUpdateInfoWarning.isVisible = false
-            mUpdateStatus.setText(R.string.snack_download_verified)
+        when (update.status) {
+            UpdateStatus.PAUSED_ERROR -> {
+                setupButtonAction(Action.DELETE, mSecondaryActionButton, true)
+                mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
+                showUpdateInfo(R.string.snack_download_failed)
+            }
+            UpdateStatus.VERIFICATION_FAILED -> {
+                mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
+                showUpdateInfo(R.string.snack_download_verification_failed)
+            }
+            UpdateStatus.VERIFIED -> {
+                mUpdateInfoWarning.isVisible = false
+                mUpdateStatus.setText(R.string.snack_download_verified)
+            }
+            else -> return
         }
     }
 
