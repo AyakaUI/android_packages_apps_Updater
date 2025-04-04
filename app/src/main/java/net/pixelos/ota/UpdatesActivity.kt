@@ -187,11 +187,36 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         setSupportActionBar(toolbar)
         supportActionBar?.apply { title = null }
 
-        headerBuildVersion.text = getString(R.string.header_android_version, Build.VERSION.RELEASE)
-        headerSecurityPatch.text = getString(R.string.header_android_security_patch, securityPatch)
-
+        setupHeaderProperties()
         updateLastCheckedString()
 
+        setupSwipeRefresh()
+        setupInsets()
+    }
+
+    private fun setupHeaderProperties() {
+        headerBuildVersion.text = getString(R.string.header_android_version, Build.VERSION.RELEASE)
+        headerSecurityPatch.text = getString(R.string.header_android_security_patch, securityPatch)
+    }
+
+    private fun setupInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(this.requireViewById(android.R.id.content))
+        { v: View,
+          windowInsets: WindowInsetsCompat ->
+            val insets: Insets =
+                windowInsets.getInsets(
+                    (WindowInsetsCompat.Type.systemBars() or
+                            WindowInsetsCompat.Type.ime() or
+                            WindowInsetsCompat.Type.displayCutout())
+                )
+            val statusBarHeight: Int =
+                this.window.decorView.rootWindowInsets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            v.setPadding(insets.left, statusBarHeight, insets.right, insets.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+    }
+
+    private fun setupSwipeRefresh() {
         mSwipeRefresh.setOnRefreshListener {
             Handler(Looper.getMainLooper())
                 .postDelayed(
@@ -205,49 +230,12 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             mUpdateInfoWarning.isVisible = false
             downloadUpdatesList(true)
         }
-        mSwipeRefresh.isEnabled = true
-
         mSwipeRefresh.setProgressBackgroundColorSchemeResource(R.color.background)
         // Not sure if there's a better way
         val typedValue = TypedValue()
         theme.resolveAttribute(android.R.attr.colorAccent, typedValue, true)
         mSwipeRefresh.setColorSchemeColors(typedValue.data)
-
-        // Setup insets for Edge-to-Edge compatibility
-        // from SettingsLib/CollapsingToolBar/EdgeToEdgeUtils.java
-        ViewCompat.setOnApplyWindowInsetsListener(this.requireViewById(android.R.id.content)) {
-                v: View,
-                windowInsets: WindowInsetsCompat,
-            ->
-            val insets: Insets =
-                windowInsets.getInsets(
-                    (WindowInsetsCompat.Type.systemBars() or
-                            WindowInsetsCompat.Type.ime() or
-                            WindowInsetsCompat.Type.displayCutout())
-                )
-            val statusBarHeight: Int =
-                this.window.decorView.rootWindowInsets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            v.setPadding(insets.left, statusBarHeight, insets.right, insets.bottom)
-            WindowInsetsCompat.CONSUMED
-        }
-
-        mNestedScrollView.setOnScrollChangeListener {
-                v: NestedScrollView,
-                _: Int,
-                _: Int,
-                _: Int,
-                _: Int,
-            ->
-            if (!v.canScrollVertically(1)) {
-                // Prevent swipeRefresh from triggering when swiping quickly to the
-                // top
-                mSwipeRefresh.isEnabled = false
-                mBottomAppBar.elevation = 0f
-            } else {
-                mSwipeRefresh.isEnabled = true
-                mBottomAppBar.elevation = 8f
-            }
-        }
+        mSwipeRefresh.isEnabled = mNestedScrollView.canScrollVertically(1)
     }
 
     public override fun onStart() {
@@ -542,10 +530,10 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
 
     private fun processNewJson(json: File, jsonNew: File, manualRefresh: Boolean) {
         try {
-            loadUpdatesList(jsonNew, manualRefresh)
-            val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+            val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
             val millis: Long = System.currentTimeMillis()
-            preferences.edit().putLong(Constants.PREF_LAST_UPDATE_CHECK, millis).apply()
+            loadUpdatesList(jsonNew, manualRefresh)
+            prefs.edit().putLong(Constants.PREF_LAST_UPDATE_CHECK, millis).apply()
             updateLastCheckedString()
             if (json.exists() && isUpdateCheckEnabled(this) && checkForNewUpdates(json, jsonNew)) {
                 UpdatesCheckReceiver.updateRepeatingUpdatesCheck(this)
@@ -638,26 +626,27 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         val changelogUrl = getChangelogURL(this)
 
         lifecycleScope.launch {
-            val markdown = withContext(Dispatchers.IO) {
-                try {
-                    val url = URL(changelogUrl)
-                    val connection = url.openConnection() as HttpURLConnection
-                    connection.requestMethod = "GET"
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 5000
+            val markdown =
+                withContext(Dispatchers.IO) {
+                    try {
+                        val url = URL(changelogUrl)
+                        val connection = url.openConnection() as HttpURLConnection
+                        connection.requestMethod = "GET"
+                        connection.connectTimeout = 5000
+                        connection.readTimeout = 5000
 
-                    connection.inputStream.bufferedReader().use { reader ->
-                        if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                            reader.readText()
-                        } else {
-                            getString(R.string.fetch_changelogs_failed)
+                        connection.inputStream.bufferedReader().use { reader ->
+                            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                                reader.readText()
+                            } else {
+                                getString(R.string.fetch_changelogs_failed)
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Could not load changelog", e)
+                        getString(R.string.fetch_changelogs_failed)
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Could not load changelog", e)
-                    getString(R.string.fetch_changelogs_failed)
                 }
-            }
 
             val markwon = Markwon.create(this@UpdatesActivity)
             markwon.setMarkdown(mShowChangelogs, markdown)
@@ -665,8 +654,8 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     }
 
     private fun updateLastCheckedString() {
-        val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val lastCheck: Long = preferences.getLong(Constants.PREF_LAST_UPDATE_CHECK, -1) / 1000
+        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val lastCheck: Long = prefs.getLong(Constants.PREF_LAST_UPDATE_CHECK, -1) / 1000
         val lastCheckString: String =
             getString(
                 R.string.header_last_updates_check,
@@ -689,14 +678,17 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                 mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
                 showUpdateInfo(R.string.snack_download_failed)
             }
+
             UpdateStatus.VERIFICATION_FAILED -> {
                 mUpdateIcon.setImageResource(R.drawable.ic_system_update_warning)
                 showUpdateInfo(R.string.snack_download_verification_failed)
             }
+
             UpdateStatus.VERIFIED -> {
                 mUpdateInfoWarning.isVisible = false
                 mUpdateStatus.setText(R.string.snack_download_verified)
             }
+
             else -> return
         }
     }
