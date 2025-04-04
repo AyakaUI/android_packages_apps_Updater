@@ -164,4 +164,6 @@
     <string name="certified_prop_info" formatted="false">Installed version: %s\n</string>
     <string name="certified_prop_remote" formatted="false">Latest version: %s</string>
 
+    <string name="fetch_changelogs_failed">Failed to fetch changelogs</string>
+
 </resources>

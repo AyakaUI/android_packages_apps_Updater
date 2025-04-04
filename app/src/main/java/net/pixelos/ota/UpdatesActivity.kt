@@ -50,6 +50,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -61,6 +62,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import io.noties.markwon.Markwon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.pixelos.ota.controller.UpdaterController
 import net.pixelos.ota.controller.UpdaterService
 import net.pixelos.ota.controller.UpdaterService.LocalBinder
@@ -83,17 +87,14 @@ import net.pixelos.ota.model.Update
 import net.pixelos.ota.model.UpdateInfo
 import net.pixelos.ota.model.UpdateStatus
 import org.json.JSONException
-import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.NumberFormat
 import java.util.UUID
-import java.util.concurrent.Executors
 
 class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     private val mBottomAppBar by lazy { requireViewById<BottomAppBar>(R.id.bottomAppBar) }
@@ -442,7 +443,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                     if (enabled)
                         View.OnClickListener { _: View? ->
                             if (canInstall(mUpdaterController!!.getUpdate(mLatestDownloadId))) {
-                                getInstallDialog(mLatestDownloadId)!!.show()
+                                getInstallDialog(mLatestDownloadId).show()
                             } else {
                                 showUpdateInfo(R.string.snack_update_not_installable)
                             }
@@ -633,39 +634,32 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
 
     private fun setChangelogs(mShowChangelogs: TextView) {
         mShowChangelogs.visibility = View.VISIBLE
-        val changelogUrl: String = getChangelogURL(this)
+        val changelogUrl = getChangelogURL(this)
 
-        // Use ExecutorService for background work
-        val executorService = Executors.newSingleThreadExecutor()
-        executorService.execute {
-            val result: StringBuilder = StringBuilder()
-            try {
-                val url = URL(changelogUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.connectTimeout = 5000
-                connection.readTimeout = 5000
+        lifecycleScope.launch {
+            val markdown = withContext(Dispatchers.IO) {
+                try {
+                    val url = URL(changelogUrl)
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.requestMethod = "GET"
+                    connection.connectTimeout = 5000
+                    connection.readTimeout = 5000
 
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                var line: String
-                while ((reader.readLine().also { line = it }) != null) {
-                    result.append(line).append("\n")
-                }
-                reader.close()
-                connection.disconnect()
-
-                // Update the UI on the main thread
-                runOnUiThread {
-                    val markwon = Markwon.create(this)
-                    markwon.setMarkdown(mShowChangelogs, result.toString())
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Could not load changelog", e)
-                runOnUiThread {
-                    val markwon = Markwon.create(this)
-                    markwon.setMarkdown(mShowChangelogs, "Failed to load changelogs")
+                    connection.inputStream.bufferedReader().use { reader ->
+                        if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                            reader.readText()
+                        } else {
+                            getString(R.string.fetch_changelogs_failed)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Could not load changelog", e)
+                    getString(R.string.fetch_changelogs_failed)
                 }
             }
+
+            val markwon = Markwon.create(this@UpdatesActivity)
+            markwon.setMarkdown(mShowChangelogs, markdown)
         }
     }
 
