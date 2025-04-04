@@ -105,7 +105,9 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
             findPreference<Preference>(Constants.PREF_CERTIFIED_PROP_STATUS)!!
         }
 
-        private val certifiedPropOverlayPkgName = "co.aospa.android.certifiedprops.overlay"
+        private val certifiedPropOverlayPkgName by lazy {
+            resources.getString(R.string.certified_prop_overlay_name)
+        }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             super.onCreatePreferences(savedInstanceState, rootKey)
