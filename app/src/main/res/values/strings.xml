@@ -152,7 +152,7 @@
 
     <string name="text_download_size_unknown">Unknown</string>
 
-    <string name="certified_prop_overlay_name" translatable="false">co.aospa.android.certifiedprops.overlay</string>
+    <string name="certified_prop_overlay_name" translatable="false">net.pixelos.certifiedprops.overlay</string>
     <string name="certified_prop_status">Certified properties status</string>
     <string name="certified_prop_check">Check for update</string>
     <string name="certified_prop_checking">Checking for certified properties update</string>
