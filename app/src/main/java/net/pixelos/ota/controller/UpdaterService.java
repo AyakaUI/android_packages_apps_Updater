@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The LineageOS Project
+ * Copyright (C) 2017-2026 The LineageOS Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Bundle;
@@ -33,10 +34,12 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import net.pixelos.ota.R;
 import net.pixelos.ota.UpdaterReceiver;
 import net.pixelos.ota.UpdatesActivity;
+import net.pixelos.ota.misc.Constants;
 import net.pixelos.ota.misc.StringGenerator;
 import net.pixelos.ota.misc.Utils;
 import net.pixelos.ota.model.Update;
@@ -56,6 +59,9 @@ public class UpdaterService extends Service {
     public static final String ACTION_INSTALL_STOP = "action_install_stop";
     public static final String ACTION_INSTALL_SUSPEND = "action_install_suspend";
     public static final String ACTION_INSTALL_RESUME = "action_install_resume";
+
+    public static final String ACTION_POST_REBOOT_CLEANUP = "action_post_reboot_cleanup";
+
     public static final int DOWNLOAD_RESUME = 0;
     public static final int DOWNLOAD_PAUSE = 1;
     private static final String TAG = "UpdaterService";
@@ -178,6 +184,10 @@ public class UpdaterService extends Service {
                         ABUpdateInstaller.getInstance(this, mUpdaterController);
                 installer.reconnect();
             }
+        } else if (ACTION_POST_REBOOT_CLEANUP.equals(intent.getAction())) {
+            String downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID);
+            handlePostRebootCleanup(downloadId);
+            tryStopSelf();
         } else if (ACTION_DOWNLOAD_CONTROL.equals(intent.getAction())) {
             String downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID);
             int action = intent.getIntExtra(EXTRA_DOWNLOAD_CONTROL, -1);
@@ -191,6 +201,10 @@ public class UpdaterService extends Service {
         } else if (ACTION_INSTALL_UPDATE.equals(intent.getAction())) {
             String downloadId = intent.getStringExtra(EXTRA_DOWNLOAD_ID);
             UpdateInfo update = mUpdaterController.getUpdate(downloadId);
+            if (update == null) {
+                Log.e(TAG, "Update not found: " + downloadId);
+                return START_NOT_STICKY;
+            }
             if (update.getPersistentStatus() != UpdateStatus.Persistent.VERIFIED) {
                 throw new IllegalArgumentException(update.getDownloadId() + " is not verified");
             }
@@ -420,9 +434,6 @@ public class UpdaterService extends Service {
                 mNotificationBuilder.setAutoCancel(true);
                 mNotificationManager.notify(NOTIFICATION_ID, mNotificationBuilder.build());
 
-                // Always delete updates
-                mUpdaterController.deleteUpdate(update.getDownloadId());
-
                 tryStopSelf();
                 break;
             }
@@ -551,6 +562,29 @@ public class UpdaterService extends Service {
     public class LocalBinder extends Binder {
         public UpdaterService getService() {
             return UpdaterService.this;
+        }
+    }
+
+    private void handlePostRebootCleanup(String downloadId) {
+        if (downloadId == null) {
+            return;
+        }
+
+        UpdateInfo update = mUpdaterController.getUpdate(downloadId);
+        if (update == null) {
+            Log.w(TAG, "Update not found during post-reboot cleanup: " + downloadId);
+            return;
+        }
+
+        Log.d(TAG, "Post-reboot cleanup for: " + downloadId);
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean deleteUpdate = pref.getBoolean(Constants.PREF_AUTO_DELETE_UPDATES, false);
+
+        // Always delete local updates
+        boolean isLocal = Update.LOCAL_ID.equals(downloadId);
+        if (deleteUpdate || isLocal) {
+            mUpdaterController.deleteUpdate(downloadId);
         }
     }
 }

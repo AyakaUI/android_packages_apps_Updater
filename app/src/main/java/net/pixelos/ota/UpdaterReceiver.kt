@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The LineageOS Project
+ * Copyright (C) 2017-2026 The LineageOS Project
  * Copyright (C) 2025 PixelOS
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import android.os.PowerManager
 import android.os.SystemProperties
 import androidx.core.app.NotificationCompat
 import androidx.preference.PreferenceManager
+import net.pixelos.ota.controller.UpdaterService
 import net.pixelos.ota.misc.Constants
 import net.pixelos.ota.misc.StringGenerator.getDateLocalizedUTC
 import java.text.DateFormat
@@ -37,7 +38,15 @@ class UpdaterReceiver : BroadcastReceiver() {
             pm.reboot(null)
         } else if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
             val pref = PreferenceManager.getDefaultSharedPreferences(context)
+            val downloadId = pref.getString(Constants.PREF_NEEDS_REBOOT_ID, null)
             pref.edit().remove(Constants.PREF_NEEDS_REBOOT_ID).apply()
+
+            if (downloadId != null) {
+                val cleanupIntent = Intent(context, UpdaterService::class.java)
+                cleanupIntent.setAction(UpdaterService.ACTION_POST_REBOOT_CLEANUP)
+                cleanupIntent.putExtra(UpdaterService.EXTRA_DOWNLOAD_ID, downloadId)
+                context.startService(cleanupIntent)
+            }
 
             if (shouldShowUpdateFailedNotification(context)) {
                 pref.edit().putBoolean(Constants.PREF_INSTALL_NOTIFIED, true).apply()
