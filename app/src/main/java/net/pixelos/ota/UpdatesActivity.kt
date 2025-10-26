@@ -338,6 +338,10 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             return
         }
 
+        // Update UI before showing the dialog to avoid race condition
+        // where progress updates arrive before the UI is ready
+        updateUI(update.downloadId)
+
         val deleteUpdate = Runnable {
             UpdaterController.getInstance(this).deleteUpdate(update.downloadId)
         }
@@ -346,9 +350,6 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             .setTitle(R.string.local_update_import)
             .setMessage(getString(R.string.local_update_import_success, update.version))
             .setPositiveButton(R.string.local_update_import_install) { _: DialogInterface?, _: Int ->
-                // Update UI
-                updateUI(update.downloadId)
-                updatesList
                 triggerUpdate(this, update.downloadId)
             }
             .setNegativeButton(android.R.string.cancel) { _: DialogInterface?, _: Int ->
