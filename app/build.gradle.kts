@@ -3,9 +3,9 @@ import org.lineageos.generatebp.models.Module
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("org.lineageos.generatebp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.lineageos.generatebp)
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -73,13 +73,13 @@ android {
 dependencies {
     compileOnly(fileTree(mapOf("dir" to "../system_libs", "include" to listOf("*.jar"))))
 
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
-    implementation("androidx.preference:preference:1.2.1")
-    implementation("com.google.android.material:material:1.13.0")
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.localbroadcastmanager)
+    implementation(libs.androidx.preference)
+    implementation(libs.material)
+    implementation(libs.core)
+    implementation(libs.androidx.swiperefreshlayout)
 }
 
 configure<GenerateBpPluginExtension> {
