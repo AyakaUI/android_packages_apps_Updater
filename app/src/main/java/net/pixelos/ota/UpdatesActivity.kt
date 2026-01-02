@@ -185,7 +185,11 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         setContentView(R.layout.activity_updates)
 
         setSupportActionBar(toolbar)
-        supportActionBar?.apply { title = null }
+        supportActionBar?.apply {
+            title = null
+            setDisplayHomeAsUpEnabled(true)
+        }
+
 
         setupHeaderProperties()
         updateLastCheckedString()
