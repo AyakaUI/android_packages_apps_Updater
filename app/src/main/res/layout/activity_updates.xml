@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -87,77 +86,9 @@
                                 android:textColor="?attr/colorError"
                                 android:visibility="gone" />
 
-                            <LinearLayout
-                                android:id="@+id/buildInfo"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="24dp"
-                                android:orientation="vertical">
+                            <include layout="@layout/build_info_layout" />
 
-                                <TextView
-                                    android:id="@+id/currentBuildVersion"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/header_android_version"
-                                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:id="@+id/currentSecurityPatch"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/header_android_security_patch"
-                                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                                    android:textColor="?attr/colorOnSurface" />
-
-                                <TextView
-                                    android:id="@+id/lastSuccessfulCheck"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="20dp"
-                                    android:text="@string/header_last_updates_check"
-                                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                                    android:textColor="?attr/colorOnSurface" />
-                            </LinearLayout>
-
-                            <LinearLayout
-                                android:id="@+id/downloadProgress"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:orientation="vertical"
-                                android:visibility="gone">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal">
-
-                                    <com.google.android.material.progressindicator.LinearProgressIndicator
-                                        android:id="@+id/progressBar"
-                                        style="@style/Widget.Material3Expressive.LinearProgressIndicator.Wavy"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_gravity="center_vertical"
-                                        android:layout_weight="1" />
-
-                                    <TextView
-                                        android:id="@+id/progressPercent"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="8dp"
-                                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                        tools:text="65%" />
-                                </LinearLayout>
-
-                                <TextView
-                                    android:id="@+id/progressText"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                    tools:text="162 of 1.1 GB (3 minutes left)" />
-                            </LinearLayout>
+                            <include layout="@layout/progress_info_layout" />
 
                             <TextView
                                 android:id="@+id/changelogSection"
@@ -166,38 +97,7 @@
                                 android:layout_marginTop="16dp"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/meteredWarningCard"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:layout_marginBottom="?attr/actionBarSize"
-                                android:backgroundTint="@color/background"
-                                android:clickable="true"
-                                android:visibility="gone">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:padding="16dp">
-
-                                    <ImageView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:contentDescription="@string/update_over_metered_network_info"
-                                        android:src="@drawable/ic_info"
-                                        app:tint="?attr/colorPrimary" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="12dp"
-                                        android:text="@string/update_over_metered_network_message"
-                                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
-
-                                </LinearLayout>
-
-                            </com.google.android.material.card.MaterialCardView>
+                            <include layout="@layout/metered_card_warning_card" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -236,11 +136,10 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/secondaryButton"
-                style="@style/Widget.Material3Expressive.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:backgroundTint="?colorPrimary"
-                android:fontFamily="@*android:string/config_bodyFontFamily"
                 android:text="@string/action_cancel"
                 android:textColor="?colorOnPrimary"
                 android:textSize="16sp"
@@ -248,11 +147,10 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/primaryButton"
-                style="@style/Widget.Material3Expressive.Button.TonalButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:backgroundTint="?colorPrimary"
-                android:fontFamily="@*android:string/config_bodyFontFamily"
                 android:text="@string/check_for_update"
                 android:textColor="?colorOnPrimary"
                 android:textSize="16sp" />
