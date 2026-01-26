@@ -222,7 +222,11 @@ class ABUpdateInstaller {
         boolean enableABPerfMode =
                 PreferenceManager.getDefaultSharedPreferences(mContext)
                         .getBoolean(Constants.PREF_AB_PERF_MODE, false);
-        mUpdateEngine.setPerformanceMode(enableABPerfMode);
+        try {
+            mUpdateEngine.setPerformanceMode(enableABPerfMode);
+        } catch (ServiceSpecificException e) {
+            Log.w(TAG, "Failed to set performance mode, continuing anyway", e);
+        }
 
         String zipFileUri = "file://" + file.getAbsolutePath();
         try {
@@ -297,7 +301,11 @@ class ABUpdateInstaller {
     }
 
     public void setPerformanceMode(boolean enable) {
-        mUpdateEngine.setPerformanceMode(enable);
+        try {
+            mUpdateEngine.setPerformanceMode(enable);
+        } catch (ServiceSpecificException e) {
+            Log.w(TAG, "Failed to set performance mode", e);
+        }
     }
 
     public void suspend() {
