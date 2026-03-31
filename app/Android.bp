@@ -44,31 +44,31 @@ android_app {
     },
 
     required: [
-        "privapp_whitelist_net.pixelos.ota",
-        "default-permissions_net.pixelos.ota",
-        "init.pixelos-updater.rc"
+        "privapp_whitelist_net.ayakaui.ota",
+        "default-permissions_net.ayakaui.ota",
+        "init.ayakaui-updater.rc"
     ],
 }
 
 prebuilt_etc {
-    name: "privapp_whitelist_net.pixelos.ota",
+    name: "privapp_whitelist_net.ayakaui.ota",
     system_ext_specific: true,
     sub_dir: "permissions",
-    src: "privapp_whitelist_net.pixelos.ota.xml",
+    src: "privapp_whitelist_net.ayakaui.ota.xml",
     filename_from_src: true,
 }
 
 prebuilt_etc {
-    name: "default-permissions_net.pixelos.ota",
+    name: "default-permissions_net.ayakaui.ota",
     system_ext_specific: true,
     sub_dir: "default-permissions",
-    src: "default-permissions_net.pixelos.ota.xml",
+    src: "default-permissions_net.ayakaui.ota.xml",
     filename_from_src: true,
 }
 
 prebuilt_etc {
-    name: "init.pixelos-updater.rc",
+    name: "init.ayakaui-updater.rc",
     system_ext_specific: true,
     sub_dir: "init",
-    src: "init.pixelos-updater.rc",
+    src: "init.ayakaui-updater.rc",
 }

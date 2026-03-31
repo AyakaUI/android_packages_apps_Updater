@@ -53,8 +53,8 @@ adb shell chgrp cache "$zip_path_device"
 adb shell chmod 664 "$zip_path_device"
 
 # Kill the app before updating the database
-adb shell "killall net.pixelos.ota 2>/dev/null"
-adb shell "sqlite3 /data/data/net.pixelos.ota/databases/updates.db" \
+adb shell "killall net.ayakaui.ota 2>/dev/null"
+adb shell "sqlite3 /data/data/net.ayakaui.ota/databases/updates.db" \
     "\"INSERT INTO updates (status, path, download_id, timestamp, version, size)" \
     "  VALUES ($status, '$zip_path_device', '$id', $timestamp, '$version', $size)\""
 

@@ -17,10 +17,10 @@ val keystoreProperties = Properties().apply {
 
 android {
     compileSdk = 36
-    namespace = "net.pixelos.ota"
+    namespace = "net.ayakaui.ota"
 
     defaultConfig {
-        applicationId = "net.pixelos.ota"
+        applicationId = "net.ayakaui.ota"
         minSdk = 34
         targetSdk = compileSdk
         versionCode = 1
