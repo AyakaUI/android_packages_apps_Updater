@@ -33,7 +33,7 @@ import android.text.format.Formatter;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import net.ayakaui.ota.R;
@@ -151,12 +151,16 @@ public class UpdaterService extends Service {
         intentFilter.addAction(UpdaterController.ACTION_INSTALL_PROGRESS);
         intentFilter.addAction(UpdaterController.ACTION_UPDATE_STATUS);
         intentFilter.addAction(UpdaterController.ACTION_UPDATE_REMOVED);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, intentFilter);
+        ContextCompat.registerReceiver(
+                this,
+                mBroadcastReceiver,
+                intentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
     public void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+        unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
 

@@ -70,7 +70,11 @@ class SettingsActivity : AppCompatActivity(R.layout.activity_settings) {
         return true
     }
 
-    abstract class SettingsFragment(@XmlRes private val preferencesResId: Int) :
+    abstract class SettingsFragment(
+        @param:XmlRes
+        @field:XmlRes
+        private val preferencesResId: Int
+    ) :
         PreferenceFragmentCompat() {
 
         @CallSuper

@@ -26,7 +26,8 @@ class PackageInstallerStatusReceiver : BroadcastReceiver() {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 // Handle user's install confirmation
-                val confirmationIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+                val confirmationIntent =
+                    intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
                 confirmationIntent?.let {
                     context.startActivity(it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }

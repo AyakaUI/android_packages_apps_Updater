@@ -47,12 +47,12 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.appbar.MaterialToolbar
@@ -253,7 +253,12 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         intentFilter.addAction(UpdaterController.ACTION_DOWNLOAD_PROGRESS)
         intentFilter.addAction(UpdaterController.ACTION_INSTALL_PROGRESS)
         intentFilter.addAction(UpdaterController.ACTION_UPDATE_REMOVED)
-        LocalBroadcastManager.getInstance(this).registerReceiver(mBroadcastReceiver, intentFilter)
+        ContextCompat.registerReceiver(
+            this,
+            mBroadcastReceiver,
+            intentFilter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun onPause() {
@@ -267,7 +272,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     }
 
     public override fun onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver)
+        unregisterReceiver(mBroadcastReceiver)
         if (mUpdaterService != null) {
             unbindService(mConnection)
         }
