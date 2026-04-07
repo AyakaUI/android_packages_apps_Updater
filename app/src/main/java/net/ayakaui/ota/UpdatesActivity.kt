@@ -350,7 +350,11 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
             .setTitle(R.string.local_update_import)
             .setMessage(getString(R.string.local_update_import_success, update.version))
             .setPositiveButton(R.string.local_update_import_install) { _: DialogInterface?, _: Int ->
-                triggerUpdate(this, update.downloadId)
+                if (isScratchMounted) {
+                    scratchMountedDialog.show()
+                } else {
+                    triggerUpdate(this, update.downloadId)
+                }
             }
             .setNegativeButton(android.R.string.cancel) { _: DialogInterface?, _: Int ->
                 deleteUpdate.run()
@@ -699,7 +703,8 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
     }
 
     private fun updateUI(downloadId: String) {
-        if (mLatestDownloadId.isEmpty()) {
+        if (downloadId.isEmpty()) {
+            mLatestDownloadId = downloadId
             setupButtonAction(Action.CHECK_UPDATES, mPrimaryActionButton, true)
             mUpdateIcon.setImageResource(R.drawable.ic_system_update)
             mUpdateStatus.setText(R.string.system_up_to_date)
@@ -709,11 +714,18 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
         }
 
         val update: UpdateInfo = mUpdaterController!!.getUpdate(downloadId) ?: return
+        val isLocalUpdate = Update.LOCAL_ID == update.downloadId
 
-        mUpdateStatus.setText(R.string.system_update_available)
         mProgress.isVisible = false
         mCurrentBuildInfo.isVisible = false
-        setChangelogs(mChangelogSection)
+        if (isLocalUpdate) {
+            mUpdateStatus.setText(R.string.local_update_import)
+            mChangelogSection.isVisible = false
+            mWarnMeteredConnectionCard.isVisible = false
+        } else {
+            mUpdateStatus.setText(R.string.system_update_available)
+            setChangelogs(mChangelogSection)
+        }
 
         val activeLayout: Boolean =
             update.persistentStatus == UpdateStatus.Persistent.INCOMPLETE ||
@@ -877,12 +889,7 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
         }
-        if (isScratchMounted) {
-            return MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.dialog_scratch_mounted_title)
-                .setMessage(R.string.dialog_scratch_mounted_message)
-                .setPositiveButton(android.R.string.ok, null)
-        }
+        if (isScratchMounted) return scratchMountedDialog
         val update: UpdateInfo = mUpdaterController!!.getUpdate(downloadId)
         val resId: Int =
             try {
@@ -919,6 +926,14 @@ class UpdatesActivity : AppCompatActivity(), UpdateImporter.Callbacks {
                     pm.reboot(null)
                 }
                 .setNegativeButton(android.R.string.cancel, null)
+        }
+
+    private val scratchMountedDialog: MaterialAlertDialogBuilder
+        get() {
+            return MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.dialog_scratch_mounted_title)
+                .setMessage(R.string.dialog_scratch_mounted_message)
+                .setPositiveButton(android.R.string.ok, null)
         }
 
     private val cancelInstallationDialog: MaterialAlertDialogBuilder
