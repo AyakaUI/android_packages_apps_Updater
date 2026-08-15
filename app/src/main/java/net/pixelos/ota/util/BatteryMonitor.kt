@@ -70,7 +70,7 @@ class BatteryMonitor(
         .stateIn(
             scope = coroutineScope,
             started = SharingStarted.Eagerly,
-            initialValue = false,
+            initialValue = true,
         )
 
     val batteryState: SharedFlow<BatteryState> = callbackFlow {
