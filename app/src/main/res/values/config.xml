@@ -3,7 +3,7 @@
      SPDX-FileCopyrightText: The LineageOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources>
     <!-- Base background of the header card. -->
     <color name="brand_primary">#167C80</color>
 
@@ -16,6 +16,13 @@
     <!-- Sheen gradient color -->
     <color name="brand_sheen">#EADDFF</color>
 
-    <!-- URL template for opening the device-specific downloads page from the update menu. -->
-    <string name="menu_downloads_url" translatable="false">https://download.lineageos.org/devices/<xliff:g id="device_name">%1$s</xliff:g>/builds</string>
+    <!-- Whether this product supports update_engine performance mode. -->
+    <bool name="config_ab_perf_mode">true</bool>
+
+    <!-- Whether major Android-version OTAs may be installed in the app. -->
+    <bool name="config_allowMajorUpgrades">true</bool>
+
+    <!-- Whether the recovery update option should be hidden. -->
+    <bool name="config_hideRecoveryUpdate">false</bool>
+
 </resources>

@@ -27,7 +27,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.lineageos.updater"
+        applicationId = "net.pixelos.ota"
         minSdk = 34
         targetSdk = 34
         versionCode = 1
@@ -82,7 +82,7 @@ android {
             }
         }
     }
-    namespace = "org.lineageos.updater"
+    namespace = "net.pixelos.ota"
 }
 
 room {
@@ -111,6 +111,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(files("libs/com/atlassian/commonmark/commonmark/0.13.0/commonmark-0.13.0.jar"))
+    implementation(files("libs/io/noties/markwon/core/4.6.2/core-4.6.2.aar"))
 
     annotationProcessor(libs.androidx.room.compiler)
 }

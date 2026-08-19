@@ -1,75 +1,196 @@
 <!--
 SPDX-FileCopyrightText: The LineageOS Project
+SPDX-FileCopyrightText: 2026 PixelOS
 SPDX-License-Identifier: Apache-2.0
 -->
 
-Updater
-=======
-Simple application to download and apply OTA packages.
+# PixelOS Updater
 
+PixelOS Updater downloads, verifies, and installs full OTA packages. The codebase retains its
+LineageOS ancestry, but its package identity, product properties, server contract, storage,
+branding, and optional PixelOS services are defined for PixelOS.
 
-Server requirements
--------------------
-The app sends `GET` requests to the URL defined by the `updater_server_url`
-resource (or the `lineage.updater.uri` system property) and expects as response
-a JSON with the following structure:
+## PixelOS integration contract
+
+The application is a platform-signed privileged `system_ext` app with package name
+`net.pixelos.ota`. Add the `Updater` module to the product packages. Its Soong definition pulls in
+the following required modules automatically:
+
+- `default-permissions_net.pixelos.ota`, which grants the runtime notification permission by
+  default;
+- `init.pixelos-updater.rc`, which creates `/data/system_updates` as `system:cache` with mode
+  `0770` and required file-based encryption.
+
+The privileged permissions that require allowlisting are declared in `app/net.pixelos.ota.xml`.
+Keep that allowlist installed with the app. Package-install permissions remain in the manifest and
+are granted through the platform signature. Downloaded packages live in `/data/system_updates`;
+exported packages use the public `PixelOS updates/` directory.
+
+The surrounding PixelOS sepolicy must retain this file-context mapping (currently provided by
+`device/custom/sepolicy/private/file_contexts`):
+
+```text
+/data/system_updates(/.*)?    u:object_r:ota_package_file:s0
+```
+
+It must also retain the `seapp_contexts` rule that assigns platform-signed `net.pixelos.ota` to
+the `updater_app` domain. PixelOS inherits that domain's update_engine, OTA-file, custom-property,
+and recovery-property rules from `device/lineage/sepolicy/common/private/updater_app.te`. Without
+the package-specific domain mapping, the Java permission declarations alone are not sufficient.
+
+The build must provide these properties:
+
+| Property | Meaning | Used for |
+| --- | --- | --- |
+| `ro.custom.device` | PixelOS device codename | OTA and changelog filenames |
+| `ro.custom.version` | Installed PixelOS version | Displayed build version |
+| `net.pixelos.version` | Official-devices branch | OTA and changelog URLs |
+| `ro.build.date.utc` | Installed build timestamp | Rejecting current and older OTAs |
+| `ro.build.ab_update` | A/B capability | Streaming and performance-mode availability |
+
+All three PixelOS-specific properties must be non-empty in production. Missing device or branch
+properties make an update check fail closed instead of querying an ambiguous feed.
+Downgrades are always rejected. A resource overlay can disallow cross-SDK upgrades.
+
+Product overlays may change the following booleans in `app/src/main/res/values/config.xml`:
+
+| Resource | Default | Effect |
+| --- | --- | --- |
+| `config_ab_perf_mode` | `true` | Shows and enables update-engine performance mode on A/B devices |
+| `config_allowMajorUpgrades` | `true` | Allows installing an OTA with a newer SDK level |
+| `config_hideRecoveryUpdate` | `false` | Hides the recovery-update preference when set |
+
+The default automatic check interval is two weeks. On first launch, the app migrates the legacy
+SharedPreferences values for performance mode, automatic deletion, periodic checks, and streaming
+into DataStore. Room migrations accept both the old PixelOS version-1 table (without `type`) and
+the Lineage-derived version-1 table, preserving existing update rows through schema version 4.
+
+## OTA service
+
+For branch `{branch}` and device `{device}`, Updater fetches:
+
+```text
+https://raw.githubusercontent.com/PixelOS-AOSP/official_devices/{branch}/API/updater/{device}.json
+```
+
+`API/updater/{device}.json` uses the strict schema below. The legacy `response` wrapper and its
+`id`, `stream_url`, `stream`, and `payload` fields are not accepted. `additional_images` may be
+included on an update for website consumers and is ignored by the app.
+
+The response is a non-empty JSON array. Each update has exactly one file:
+
 ```json
 [
   {
     "datetime": 1781858358,
     "files": [
       {
-        "filename": "ota-package.zip",
+        "filename": "PixelOS_device-17.0-20260619-0000.zip",
         "os_patch_level": "2026-06-01",
         "os_sdk_level": 36,
-        "ota_property_files": "payload_metadata.bin:4662:187245,payload.bin:4662:1926274191,payload_properties.txt:1926278911:156,apex_info.pb:2220:1279,care_map.pb:3546:1069,metadata:69:683,metadata.pb:820:1352                        ",
+        "ota_property_files": "payload_metadata.bin:4662:187245,payload.bin:191907:1926080000,payload_properties.txt:1926271907:156",
         "sha256": "11468fc263696b8bc0afd35861c35d62a562ba29722447a3972c39f0023deb7f",
         "size": 1926282058,
-        "url": "https://example.com/full/ota-package.zip"
+        "url": "https://downloads.example.org/device/PixelOS_device-17.0-20260619-0000.zip"
       }
     ],
-    "type": "nightly",
-    "version": "23.2"
+    "type": "ci",
+    "version": "17.0"
   }
 ]
-
 ```
 
-The `datetime` attribute is the build date expressed as UNIX timestamp.  
-The `files[0].filename` attribute is the name of the file to be downloaded.  
-The `files[0].os_patch_level` optional attribute is the security patch level of the OTA update.  
-The `files[0].os_sdk_level` optional attribute is the SDK level of the OTA update.  
-The `files[0].ota_property_files` optional attribute is the `ota-property-files` value from `META-INF/com/android/metadata` of the OTA update.  
-The `files[0].sha256` attribute is a sha256 of the OTA update.  
-The `files[0].size` attribute is the size of the update expressed in bytes.  
-The `files[0].url` attribute is the URL of the file to be downloaded.  
-The `type` attribute is the string to be compared with the `ro.lineage.releasetype` property.  
-The `version` attribute is the string to be compared with the `ro.lineage.build.version` property.  
+The runtime contract is:
 
-Additional attributes are ignored.
+- `datetime`: positive UNIX build timestamp; it must be newer than `ro.build.date.utc`.
+- `files`: exactly one artifact. Do not publish mirrors or package variants as extra elements.
+- `filename`: non-blank display and download filename.
+- `os_patch_level`: non-blank Android security patch level from OTA metadata.
+- `os_sdk_level`: positive Android SDK level. Values below the installed SDK are rejected.
+- `ota_property_files`: optional exact `ota-property-files` value from
+  `META-INF/com/android/metadata`. When present, every range must be numeric, positive, unique, and
+  contained in the advertised package size. The three payload entries shown above are mandatory so
+  streaming has all offsets it needs.
+- `sha256`: lowercase, 64-character SHA-256 digest of the complete OTA artifact. It is also the
+  update's stable database identity.
+- `size`: positive artifact size in bytes.
+- `url`: absolute HTTPS artifact URL.
+- `type`: retained as `ci` for feed compatibility; it is not used to filter updates.
+- `version`: non-blank PixelOS release version.
+- `additional_images`: optional website metadata ignored by the updater app.
 
+The response body is capped at 1 MiB, redirects are disabled, and a non-successful HTTP response,
+invalid JSON, or any invalid entry rejects the whole response. Unknown JSON fields are ignored by
+the app for forward compatibility; the publication validator below rejects them to catch mistakes,
+except for `additional_images`.
+When a valid feed no longer contains an online update, the stale online row and its temporary file
+are removed while locally imported packages are preserved.
 
-Build with Android Studio
--------------------------
-Updater needs access to the system API, therefore it can't be built only using
-the public SDK. You first need to generate the libraries with all the needed
-classes. The application also needs elevated privileges, so you need to sign
-it with the right key to update the one in the system partition. To do this:
+### Generate and validate OTA JSON
 
- - Place this directory anywhere in the Android source tree
- - Generate a keystore and keystore.properties using `gen-keystore.sh`
- - Build the platform artifacts that provide the non-public classes used by
-   the app. At minimum, the jars copied by `pull-system-libs.sh` must exist
-   under `out/soong/.intermediates/`
- - Run `./pull-system-libs.sh` from this directory. By default it reads from
-   `../../../out` relative to this repository path and will populate
-   `system_libs/` with the jars Gradle expects:
-   - `framework.jar`
-   - `SettingsLib.jar`
-   - `SpaLib.jar`
- - If your build output lives somewhere else, pass it explicitly:
-   `./pull-system-libs.sh /path/to/out`
+`tools/pixelos_feed.py` uses only the Python standard library. It reads authoritative values from
+the OTA ZIP and computes size and SHA-256 itself:
 
-You need to do the above once, unless Android Studio can't find some symbol.
-In that case, rebuild the relevant platform targets and rerun
-`./pull-system-libs.sh`.
+```sh
+tools/pixelos_feed.py generate-ota PixelOS_device-17.0-build.zip \
+  --url https://downloads.example.org/device/PixelOS_device-17.0-build.zip \
+  --version 17.0 \
+  --output device.json
+
+tools/pixelos_feed.py validate-ota device.json \
+  --artifact PixelOS_device-17.0-build.zip
+```
+
+Run the validator in official-devices CI before publishing each JSON file. Artifact comparison
+checks filename, timestamp, patch level, SDK level, `ota_property_files`, size, and SHA-256.
+
+## Device changelog
+
+The main screen loads Markdown from:
+
+```text
+https://raw.githubusercontent.com/PixelOS-AOSP/official_devices/{branch}/API/updater/changelogs/{device}.md
+```
+
+The app shows explicit loading, empty, failure, and loaded states. Responses must be successful,
+must not redirect, and are capped at 256 KiB. A changelog is cached in memory by branch and device;
+the menu action opens the same current-device document in a browser.
+
+## Local developer package import
+
+`push-update.sh` registers a local full OTA on a rooted development device:
+
+```sh
+./push-update.sh PixelOS_device-17.0-build.zip [UNVERIFIED] [SERIAL]
+```
+
+The script accepts only `PixelOS_DEVICE-VERSION-*.zip`, verifies the connected
+`ro.custom.device`, validates OTA metadata through `tools/pixelos_feed.py`, computes SHA-256, checks
+for Room schema version 4 and duplicate IDs, fills the current database columns, and writes the
+package to `/data/system_updates`. Launch Updater once first so Room creates or migrates the
+database. This script is for local engineering devices; it is not a feed publication mechanism.
+
+## Verification
+
+Run the host-side metadata tests without an Android build:
+
+```sh
+python3 -m unittest discover -s tools/tests -v
+sh -n push-update.sh
+```
+
+## Building with Android Studio
+
+Updater uses system APIs and privileged permissions, so the public Android SDK alone is not
+enough. For IDE work:
+
+1. Place this directory in the Android source tree.
+2. Generate `keystore.properties` from `keystore.properties.sample` if a local Gradle signing key
+   is required.
+3. Produce the platform intermediates used by `pull-system-libs.sh` in the surrounding Android
+   tree.
+4. Run `./pull-system-libs.sh [path/to/out]` to populate `system_libs/` with `framework.jar`,
+   `SettingsLib.jar`, and `SpaLib.jar`.
+
+The authoritative product build remains the Soong `Updater` module in `app/Android.bp`; it must be
+platform-signed and installed as a privileged `system_ext` app.
