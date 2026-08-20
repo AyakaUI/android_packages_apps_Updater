@@ -58,7 +58,7 @@
     <string name="menu_stream_updates_summary">Install updates while downloading. Disable to save update packages for export.</string>
     <string name="menu_delete_update">Delete</string>
     <string name="menu_export_update">Export update</string>
-    <string name="menu_view_downloads">View on <xliff:g id="brand_name" example="LineageOS">%1$s</xliff:g> Downloads</string>
+    <string name="menu_view_downloads">View on <xliff:g id="brand_name" example="PixelOS">%1$s</xliff:g> Downloads</string>
     <string name="menu_metered_network_warning">Metered network warning</string>
     <string name="menu_metered_network_warning_summary">Warn before downloading over mobile data</string>
     <string name="menu_ab_perf_mode">Prioritise update process</string>
@@ -81,8 +81,8 @@
     <string name="found_bug">Found a bug? Report it with our bug report guide:</string>
     <string name="updates_zero_state_title">No updates available</string>
     <string name="updates_zero_state_description">New builds for this device will appear here when available.</string>
-    <string name="list_build_version">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g></string>
-    <string name="list_build_version_date">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g> - <xliff:g id="date" example="July 11, 2017">%2$s</xliff:g></string>
+    <string name="list_build_version">PixelOS <xliff:g id="version" example="14.1">%1$s</xliff:g></string>
+    <string name="list_build_version_date">PixelOS <xliff:g id="version" example="14.1">%1$s</xliff:g> - <xliff:g id="date" example="July 11, 2017">%2$s</xliff:g></string>
     <string name="list_update_size">Update size: <xliff:g id="size" example="1.34 GB">%1$s</xliff:g></string>
     <string name="list_security_update">Security update: <xliff:g id="date" example="Jan 2026">%1$s</xliff:g></string>
     <string name="list_major_android_upgrade">Major Android upgrade</string>

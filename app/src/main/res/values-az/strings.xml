@@ -58,7 +58,7 @@
     <string name="menu_stream_updates_summary">Güncəlləmələri endirərkən quraşdır. Güncəlləmə paketlərini xaricə köçürmək üçün saxlanılmasını sıradan çıxardın.</string>
     <string name="menu_delete_update">Sil</string>
     <string name="menu_export_update">Güncəlləməni xaricə köçür</string>
-    <string name="menu_view_downloads"><xliff:g id="brand_name" example="LineageOS">%1$s</xliff:g> Endirilənlərdə bax</string>
+    <string name="menu_view_downloads"><xliff:g id="brand_name" example="PixelOS">%1$s</xliff:g> Endirilənlərdə bax</string>
     <string name="menu_metered_network_warning">Ölçülən şəbəkə xəbərdarlığı</string>
     <string name="menu_metered_network_warning_summary">Mobil veri ilə endirərkən xəbərdarlıq et</string>
     <string name="menu_ab_perf_mode">Üstünlüyü güncəlləmə prosesinə ver</string>
@@ -81,8 +81,8 @@
     <string name="found_bug">Xəta tapmısınız? Xəta hesabatı bələdçimizlə bildirin:</string>
     <string name="updates_zero_state_title">Güncəlləmə yoxdur</string>
     <string name="updates_zero_state_description">Bu cihaz üçün yeni versiyalar mövcud olduğu zaman burada görünəcək.</string>
-    <string name="list_build_version">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g></string>
-    <string name="list_build_version_date">LineageOS <xliff:g id="version" example="14.1">%1$s</xliff:g> - <xliff:g id="date" example="July 11, 2017">%2$s</xliff:g></string>
+    <string name="list_build_version">PixelOS <xliff:g id="version" example="14.1">%1$s</xliff:g></string>
+    <string name="list_build_version_date">PixelOS <xliff:g id="version" example="14.1">%1$s</xliff:g> - <xliff:g id="date" example="July 11, 2017">%2$s</xliff:g></string>
     <string name="list_update_size">Güncəlləmə ölçüsü: <xliff:g id="size" example="1.34 GB">%1$s</xliff:g></string>
     <string name="list_security_update">Təhlükəsizlik güncəlləmələri: <xliff:g id="date" example="Jan 2026">%1$s</xliff:g></string>
     <string name="list_major_android_upgrade">Əsas Android yüksəltməsi</string>
