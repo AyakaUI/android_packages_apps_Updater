@@ -42,9 +42,9 @@ The build must provide these properties:
 
 | Property | Meaning | Used for |
 | --- | --- | --- |
-| `ro.custom.device` | AyakaUI device codename | OTA and changelog filenames |
+| `ro.ayaka.device` | AyakaUI device codename | OTA and changelog filenames |
 | `ro.custom.version` | Installed AyakaUI version | Displayed build version |
-| `net.ayakaui.version` | Official-devices branch | OTA and changelog URLs |
+| `net.ayaka.version` | Official-devices branch | OTA and changelog URLs |
 | `ro.build.date.utc` | Installed build timestamp | Rejecting current and older OTAs |
 | `ro.build.ab_update` | A/B capability | Streaming and performance-mode availability |
 
