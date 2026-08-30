@@ -17,8 +17,8 @@ object DeviceInfoUtils : SettingsLibDeviceInfoUtils() {
     private const val PROP_BUILD_DATE = "ro.build.date.utc"
     private const val PROP_BUILD_TYPE = "net.ayakaui.build_type"
     private const val PROP_BUILD_VERSION = "ro.custom.version"
-    private const val PROP_DEVICE = "ro.custom.device"
-    private const val PROP_OTA_BRANCH = "net.ayakaui.version"
+    private const val PROP_DEVICE = "ro.ayaka.device"
+    private const val PROP_OTA_BRANCH = "net.ayaka.version"
     private const val PROP_UPDATE_RECOVERY = "persist.vendor.recovery_update"
 
     // Read-only

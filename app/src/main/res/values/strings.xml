@@ -18,7 +18,7 @@
          The path is relative to the root of the external storage.-->
     <string name="export_path" translatable="false">AyakaUI updates/</string>
 
-    <!-- Placeholders: {branch} is net.ayakaui.version; {device} is ro.custom.device. -->
+    <!-- Placeholders: {branch} is net.ayaka.version; {device} is ro.ayaka.device. -->
     <string name="updater_server_url" translatable="false">https://raw.githubusercontent.com/AyakaUI/official_devices/{branch}/API/updater/{device}.json</string>
     <string name="changelog_url" translatable="false">https://raw.githubusercontent.com/AyakaUI/official_devices/{branch}/API/updater/changelogs/{device}.md</string>
     <string name="certified_prop_url" translatable="false">https://raw.githubusercontent.com/AyakaUI/official_devices/{branch}/API/updater/CertifiedProps/certified_build_props.apk</string>
