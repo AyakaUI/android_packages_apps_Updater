@@ -7,16 +7,16 @@
 set -u
 
 updates_dir=/data/system_updates
-package_name=net.pixelos.ota
+package_name=net.ayakaui.ota
 database_path=/data/user/0/$package_name/databases/updates.db
 expected_database_version=4
 root_enabled=0
 
 usage() {
     echo "Usage: $0 ZIP [UNVERIFIED] [SERIAL]"
-    echo "Push a PixelOS OTA ZIP to $updates_dir and register it with Updater."
+    echo "Push a AyakaUI OTA ZIP to $updates_dir and register it with Updater."
     echo
-    echo "Expected filename: PixelOS_DEVICE-VERSION-*.zip"
+    echo "Expected filename: AyakaUI_DEVICE-VERSION-*.zip"
     echo "Set UNVERIFIED to any non-empty value to make Updater verify the package."
 }
 
@@ -101,22 +101,22 @@ zip_path=$(cd "$zip_directory" 2>/dev/null && pwd -P)/$zip_name
 serial=${3-}
 
 case "$zip_name" in
-    PixelOS_*-*-*.zip) ;;
-    *) die "Filename must match PixelOS_DEVICE-VERSION-*.zip" ;;
+    AyakaUI_*-*-*.zip) ;;
+    *) die "Filename must match AyakaUI_DEVICE-VERSION-*.zip" ;;
 esac
 
 case "$zip_name" in
     *[!A-Za-z0-9._-]*) die "Filename contains unsupported characters" ;;
 esac
 
-name_remainder=${zip_name#PixelOS_}
+name_remainder=${zip_name#AyakaUI_}
 ota_device=${name_remainder%%-*}
 name_remainder=${name_remainder#*-}
 version=${name_remainder%%-*}
 [ -n "$ota_device" ] || die "Unable to parse device from filename"
 [ -n "$version" ] || die "Unable to parse version from filename"
 
-temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/pixelos-updater.XXXXXX") || \
+temporary_directory=$(mktemp -d "${TMPDIR:-/tmp}/ayakaui-updater.XXXXXX") || \
     die "Unable to create temporary directory"
 metadata_file=$temporary_directory/metadata
 trap cleanup 0
@@ -162,12 +162,12 @@ if [ -n "$connected_device" ] && [ "$connected_device" != "$ota_device" ]; then
     die "OTA is for $ota_device, but connected device is $connected_device"
 fi
 
-build_type=$(adb_cmd shell getprop net.pixelos.build_type | tr -d '\r')
+build_type=$(adb_cmd shell getprop net.ayakaui.build_type | tr -d '\r')
 [ -n "$build_type" ] || build_type=ci
-case "$build_type" in *[!A-Za-z0-9._-]*) die "Invalid net.pixelos.build_type" ;; esac
+case "$build_type" in *[!A-Za-z0-9._-]*) die "Invalid net.ayakaui.build_type" ;; esac
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
-python3 "$script_directory/tools/pixelos_feed.py" generate-ota "$zip_path" \
+python3 "$script_directory/tools/ayakaui_feed.py" generate-ota "$zip_path" \
     --url "https://localhost/$zip_name" \
     --version "$version" \
     --type "$build_type" >/dev/null || die "OTA metadata validation failed"
@@ -193,7 +193,7 @@ if [ -n "$ota_property_files" ]; then
 fi
 
 adb_cmd shell "test -d '$updates_dir'" || \
-    die "$updates_dir does not exist; boot a build containing init.pixelos-updater.rc"
+    die "$updates_dir does not exist; boot a build containing init.ayakaui-updater.rc"
 adb_cmd shell "command -v sqlite3 >/dev/null" || die "sqlite3 is unavailable on the device"
 adb_cmd shell "test -f '$database_path'" || \
     die "Updater database does not exist; launch Updater once before using this script"
@@ -225,4 +225,4 @@ sql="INSERT INTO updates (download_id, status, path, timestamp, type, version, s
 adb_cmd shell "sqlite3 '$database_path' \"$sql\"" || \
     die "Failed to add OTA ZIP to the Updater database; pushed file remains at $zip_path_device"
 
-echo "Registered $zip_name with PixelOS Updater."
+echo "Registered $zip_name with AyakaUI Updater."

@@ -27,7 +27,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "net.pixelos.ota"
+        applicationId = "net.ayakaui.ota"
         minSdk = 34
         targetSdk = 34
         versionCode = 1
@@ -82,7 +82,7 @@ android {
             }
         }
     }
-    namespace = "net.pixelos.ota"
+    namespace = "net.ayakaui.ota"
 }
 
 room {
