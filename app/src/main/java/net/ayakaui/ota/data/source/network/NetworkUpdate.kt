@@ -25,6 +25,7 @@ data class NetworkUpdate(
     // @SerialName("date") val date: String,
     @SerialName("datetime") val datetime: Long,
     @SerialName("files") val files: List<NetworkUpdateFile>,
+    @SerialName("incremental") val incremental: List<NetworkUpdateFile>? = null,
     @SerialName("version") val version: String,
 )
 
@@ -66,21 +67,16 @@ private fun String.parsePackageFileRanges(packageSize: Long) =
         name to PackageFileRange(offset = offset, size = size)
     }
 
-fun NetworkUpdate.validate() {
-    require(datetime > 0) { "datetime must be positive" }
-    require(files.size == 1) { "Each update must contain exactly one file" }
-    require(version.isNotBlank()) { "version must not be blank" }
-
-    val file = files.single()
-    require(file.filename.isNotBlank()) { "filename must not be blank" }
-    require(file.osPatchLevel.isNotBlank()) { "os_patch_level must not be blank" }
-    require(file.osSdkLevel > 0) { "os_sdk_level must be positive" }
-    require(file.sha256.matches(Regex("[0-9a-f]{64}"))) { "sha256 must be lowercase hex" }
-    require(file.size > 0) { "size must be positive" }
-    require(URI(file.url).scheme.equals("https", ignoreCase = true)) {
-        "Update URL must use HTTPS"
+fun NetworkUpdateFile.validate(label: String) {
+    require(filename.isNotBlank()) { "$label.filename must not be blank" }
+    require(osPatchLevel.isNotBlank()) { "$label.os_patch_level must not be blank" }
+    require(osSdkLevel > 0) { "$label.os_sdk_level must be positive" }
+    require(sha256.matches(Regex("[0-9a-f]{64}"))) { "$label.sha256 must be lowercase hex" }
+    require(size > 0) { "$label.size must be positive" }
+    require(URI(url).scheme.equals("https", ignoreCase = true)) {
+        "$label URL must use HTTPS"
     }
-    file.otaPropertyFiles?.parsePackageFileRanges(file.size)?.let { ranges ->
+    otaPropertyFiles?.parsePackageFileRanges(size)?.let { ranges ->
         require(Constants.AB_PAYLOAD_METADATA_PATH in ranges) {
             "ota_property_files is missing ${Constants.AB_PAYLOAD_METADATA_PATH}"
         }
@@ -93,8 +89,19 @@ fun NetworkUpdate.validate() {
     }
 }
 
-fun NetworkUpdate.toUpdate(): Update {
-    val file = files[0]
+fun NetworkUpdate.validate() {
+    require(datetime > 0) { "datetime must be positive" }
+    require(files.size == 1) { "Each update must contain exactly one file" }
+    require(version.isNotBlank()) { "version must not be blank" }
+
+    files.single().validate("file")
+    incremental?.let {
+        require(it.size == 1) { "Each update must contain exactly one incremental file" }
+        it.single().validate("incremental file")
+    }
+}
+
+private fun NetworkUpdate.toUpdate(file: NetworkUpdateFile): Update {
     val packageFileRanges = file.otaPropertyFiles?.parsePackageFileRanges(file.size).orEmpty()
     val payloadMetadataRange = packageFileRanges[Constants.AB_PAYLOAD_METADATA_PATH]
     val payloadRange = packageFileRanges[Constants.AB_PAYLOAD_BIN_PATH]
@@ -117,4 +124,11 @@ fun NetworkUpdate.toUpdate(): Update {
         payloadPropertiesSize = payloadPropertiesRange?.size,
         isAvailableOnline = true,
     )
+}
+
+fun NetworkUpdate.toUpdate(): Update = toUpdate(files[0])
+
+fun NetworkUpdate.toIncrementalUpdate(): Update? {
+    val file = incremental?.firstOrNull() ?: return null
+    return toUpdate(file)
 }

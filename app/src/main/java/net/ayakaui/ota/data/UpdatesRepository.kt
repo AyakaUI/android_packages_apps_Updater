@@ -5,7 +5,9 @@
 
 package net.ayakaui.ota.data
 
+import android.content.Context
 import android.util.Log
+import androidx.preference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -16,11 +18,13 @@ import net.ayakaui.ota.data.source.network.toUpdate
 import net.ayakaui.ota.deviceinfo.DeviceInfoUtils
 import net.ayakaui.ota.notifications.NotificationHelper
 import net.ayakaui.ota.util.NetworkMonitor
+import org.json.JSONObject
 import java.io.IOException
 
 private const val TAG = "UpdatesRepository"
 
 class UpdatesRepository(
+    private val context: Context,
     private val networkMonitor: NetworkMonitor,
     private val notificationHelper: NotificationHelper,
     private val networkDataSource: UpdatesNetworkDataSource,
@@ -41,7 +45,11 @@ class UpdatesRepository(
         if (!networkMonitor.currentNetworkState.isOnline) return null
 
         val networkUpdates = withContext(Dispatchers.IO) {
-            networkDataSource.fetchUpdates().map { it.toUpdate() }.filter { filterUpdates(it) }
+            val network = networkDataSource.fetchUpdates()
+            persistIncrementalLinks(network)
+            val deltaUrls = network.mapNotNull { it.incremental?.firstOrNull()?.url }.toSet()
+            network.flatMap { listOfNotNull(it.toUpdate(), it.toIncrementalUpdate()) }
+                .filter { filterUpdates(it, deltaUrls) }
         }
 
         val networkIds = networkUpdates.map { it.downloadId }.toSet()
@@ -80,12 +88,28 @@ class UpdatesRepository(
         return System.currentTimeMillis()
     }
 
-    private fun filterUpdates(update: Update): Boolean {
+    private fun persistIncrementalLinks(network: List<NetworkUpdate>) {
+        val links = JSONObject()
+        network.forEach { update ->
+            update.incremental?.firstOrNull()?.let { delta ->
+                links.put(update.files[0].sha256, delta.url)
+            }
+        }
+        PreferenceManager.getDefaultSharedPreferences(context).edit()
+            .putString(Constants.PREF_INCREMENTAL_LINKS, links.toString()).apply()
+    }
+
+    private fun filterUpdates(update: Update, deltaUrls: Set<String>): Boolean {
         val isCurrentBuild = update.timestamp == DeviceInfoUtils.buildDateTimestamp
         val isOlderBuild = update.timestamp < DeviceInfoUtils.buildDateTimestamp
 
         if (!DeviceInfoUtils.isDowngradingAllowed && (isOlderBuild || isCurrentBuild)) {
             Log.d(TAG, "${update.name} is not newer than the current build")
+            return false
+        }
+
+        if (update.downloadUrl in deltaUrls && !DeviceInfoUtils.isABDevice) {
+            Log.d(TAG, "${update.name} is incremental but this device is not A/B")
             return false
         }
 

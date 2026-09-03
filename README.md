@@ -100,6 +100,26 @@ The response is a non-empty JSON array. Each update has exactly one file:
 ]
 ```
 
+A release may carry a paired incremental. The full entry then also has an
+`incremental` array with exactly one file, in the same shape as `files[0]`:
+
+```json
+"incremental": [
+  {
+    "filename": "incremental_device_20260619_0000_to_20260703_0000.zip",
+    "os_patch_level": "2026-07-01",
+    "os_sdk_level": 36,
+    "sha256": "6d2f6b0e8a2f1d0f6b3b2f9e8d7c6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f",
+    "size": 214748364,
+    "url": "https://downloads.example.org/device/incremental_device_20260619_0000_to_20260703_0000.zip"
+  }
+]
+```
+
+The app attempts the delta first on A/B devices and automatically falls back
+to the paired full entry when verification or installation fails;
+update_engine itself rejects wrong-source deltas.
+
 The runtime contract is:
 
 - `datetime`: positive UNIX build timestamp; it must be newer than `ro.build.date.utc`.
