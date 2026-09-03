@@ -47,6 +47,7 @@ class UpdaterApplication : Application() {
             notificationHelper = notificationHelper,
             networkDataSource = networkDataSource,
             localDataSource = localDataSource,
+            userPreferencesRepository = userPreferencesRepository,
         )
     }
 

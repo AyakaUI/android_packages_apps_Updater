@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package net.pixelos.ota.ui.common
+package net.ayakaui.ota.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import net.pixelos.ota.R
+import net.ayakaui.ota.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
