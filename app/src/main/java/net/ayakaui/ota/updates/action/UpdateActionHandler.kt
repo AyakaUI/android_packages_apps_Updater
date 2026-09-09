@@ -159,10 +159,6 @@ class UpdateActionHandler(
 
             UpdateActionType.EXPORT -> exportUpdate(update)
 
-            UpdateActionType.VIEW_DOWNLOADS -> update.downloadUrl?.let { url ->
-                activity.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-            }
-
             UpdateActionType.REBOOT ->
                 activity.getSystemService(PowerManager::class.java).reboot(null)
         }
