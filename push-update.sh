@@ -162,9 +162,9 @@ if [ -n "$connected_device" ] && [ "$connected_device" != "$ota_device" ]; then
     die "OTA is for $ota_device, but connected device is $connected_device"
 fi
 
-build_type=$(adb_cmd shell getprop net.ayakaui.build_type | tr -d '\r')
+build_type=$(adb_cmd shell getprop net.ayaka.build_type | tr -d '\r')
 [ -n "$build_type" ] || build_type=ci
-case "$build_type" in *[!A-Za-z0-9._-]*) die "Invalid net.ayakaui.build_type" ;; esac
+case "$build_type" in *[!A-Za-z0-9._-]*) die "Invalid net.ayaka.build_type" ;; esac
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 python3 "$script_directory/tools/ayakaui_feed.py" generate-ota "$zip_path" \

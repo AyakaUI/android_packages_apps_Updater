@@ -24,10 +24,10 @@ class UpdatesNetworkDataSource(private val context: Context) {
                 "Missing ro.custom.device"
             }
             require(DeviceInfoUtils.otaBranch.isNotBlank()) {
-                "Missing net.ayakaui.version"
+                "Missing net.ayaka.version"
             }
             require(DeviceInfoUtils.buildType.isNotBlank()) {
-                "Missing net.ayakaui.build_type"
+                "Missing net.ayaka.build_type"
             }
             return base
                 .replace("{device}", DeviceInfoUtils.device)
