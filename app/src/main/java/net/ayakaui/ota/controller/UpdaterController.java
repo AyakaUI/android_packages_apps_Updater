@@ -24,6 +24,7 @@ import androidx.preference.PreferenceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -215,6 +216,20 @@ public class UpdaterController {
                         notifyUpdateChange(downloadId);
                     }
                 }
+                tryReleaseWakelock();
+            }
+
+            @Override
+            public void onFailure(boolean cancelled, int responseCode) {
+                DownloadEntry entry = mDownloads.get(downloadId);
+                if (cancelled || responseCode != HttpURLConnection.HTTP_NOT_FOUND || entry == null
+                        || !markIncrementalFailed(downloadId, UpdateStatus.DELETED)) {
+                    onFailure(cancelled);
+                    return;
+                }
+                Log.e(TAG, "Incremental is gone from the server");
+                removeDownloadClient(entry);
+                notifyUpdateChange(downloadId);
                 tryReleaseWakelock();
             }
         };
