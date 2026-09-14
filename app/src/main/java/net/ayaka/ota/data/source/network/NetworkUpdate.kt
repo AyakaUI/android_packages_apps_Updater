@@ -76,15 +76,15 @@ fun NetworkUpdateFile.validate(label: String) {
     require(URI(url).scheme.equals("https", ignoreCase = true)) {
         "$label URL must use HTTPS"
     }
+    // Non-A/B packages only list their metadata.
     otaPropertyFiles?.parsePackageFileRanges(size)?.let { ranges ->
-        require(Constants.AB_PAYLOAD_METADATA_PATH in ranges) {
-            "ota_property_files is missing ${Constants.AB_PAYLOAD_METADATA_PATH}"
-        }
-        require(Constants.AB_PAYLOAD_BIN_PATH in ranges) {
-            "ota_property_files is missing ${Constants.AB_PAYLOAD_BIN_PATH}"
-        }
-        require(Constants.AB_PAYLOAD_PROPERTIES_PATH in ranges) {
-            "ota_property_files is missing ${Constants.AB_PAYLOAD_PROPERTIES_PATH}"
+        if (Constants.AB_PAYLOAD_BIN_PATH in ranges) {
+            require(Constants.AB_PAYLOAD_METADATA_PATH in ranges) {
+                "ota_property_files is missing ${Constants.AB_PAYLOAD_METADATA_PATH}"
+            }
+            require(Constants.AB_PAYLOAD_PROPERTIES_PATH in ranges) {
+                "ota_property_files is missing ${Constants.AB_PAYLOAD_PROPERTIES_PATH}"
+            }
         }
     }
 }

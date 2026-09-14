@@ -140,11 +140,13 @@ def parse_ota_property_files(value: Any, package_size: int) -> dict[str, tuple[i
         _require(offset + size <= package_size, f"Range for {name} exceeds package size")
         ranges[name] = (offset, size)
 
-    missing = REQUIRED_AB_FILES - set(ranges)
-    _require(
-        not missing,
-        "ota_property_files is missing required entries: " + ", ".join(sorted(missing)),
-    )
+    # Non-A/B packages only list their metadata.
+    if "payload.bin" in ranges:
+        missing = REQUIRED_AB_FILES - set(ranges)
+        _require(
+            not missing,
+            "ota_property_files is missing required entries: " + ", ".join(sorted(missing)),
+        )
     return ranges
 
 
