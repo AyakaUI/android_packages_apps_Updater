@@ -36,7 +36,6 @@ import net.ayaka.ota.data.UserPreferencesRepository
 import net.ayaka.ota.deviceinfo.DeviceInfoUtils
 import net.ayaka.ota.util.BatteryMonitor
 import java.io.File
-import java.util.Locale
 
 @Composable
 fun PreferencesScreen() {
@@ -267,14 +266,7 @@ private fun CertifiedPropsPreferences(
 }
 
 private fun formatCertifiedPropsVersion(version: Long, unknown: String): String {
-    return if (version > 0) {
-        val versionString = version.toString().padStart(3, '0')
-        val major = versionString.dropLast(2).toInt()
-        val minor = versionString.takeLast(2).toInt()
-        String.format(Locale.getDefault(), "%d.%02d", major, minor)
-    } else {
-        unknown
-    }
+    return if (version > 0) version.toString() else unknown
 }
 
 private fun installRecoveryScriptExists() = File("/vendor/bin/install-recovery.sh").exists()
