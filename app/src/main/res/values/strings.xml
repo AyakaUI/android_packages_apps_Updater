@@ -212,4 +212,8 @@
     <string name="local_update_import_success_message">Build date: <xliff:g id="build_date" example="Apr 27">%1$s</xliff:g>\n\nTap the imported update to view available actions.</string>
     <string name="local_update_import_failure">Failed to import local update</string>
     <string name="local_update_name">Local update</string>
+
+    <!-- Battery low dialog -->
+    <string name="dialog_battery_low_title">Battery level too low</string>
+    <string name="dialog_battery_low_message_pct">This update requires at least %1$d%% battery when not charging, or %2$d%% while charging. Please charge your device and try again.</string>
 </resources>
