@@ -46,7 +46,7 @@ class UpdatesNetworkDataSource(private val context: Context) {
 
         val responseBody = client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("Unexpected HTTP status: ${response.code}")
+                throw IOException("Unexpected HTTP status: ${response.code} for URL: $serverUrl")
             }
 
             val body = response.body ?: throw IOException("Empty response body")

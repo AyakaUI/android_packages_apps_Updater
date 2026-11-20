@@ -52,7 +52,7 @@ class ChangelogRepository(private val context: Context) {
 
         val markdown = client.newCall(Request.Builder().url(url).build()).execute().use { response ->
             if (!response.isSuccessful) {
-                throw IOException("Unexpected changelog HTTP status: ${response.code}")
+                throw IOException("Unexpected changelog HTTP status: ${response.code} for URL: $url")
             }
             val body = response.body ?: throw IOException("Empty changelog response")
             val contentLength = body.contentLength()
